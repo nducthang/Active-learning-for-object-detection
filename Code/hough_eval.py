@@ -2,6 +2,8 @@
 # %% Imports
 from __future__ import print_function
 
+from matplotlib.pyplot import sca
+
 from hough_preferences import scales, ratios, root_dir,   \
     test_offset, n_pos, n_threads, min_prob_threshold, n_feature_channels, \
     patch_size, application_step_size, use_reduced_grid, dataset_flag, forest_name, feat_name, n_detec, clear_area, \
@@ -128,6 +130,9 @@ def evaluate( name,im,neg_image_store_flag,forest, soil, box_height, box_width):
 
     for idx, scale in enumerate(scales):
         scaled_image = np.ascontiguousarray((rescale(im, scale) * 255.).astype('uint8'))
+        print("SCALE IMAGE", scaled_image.shape)
+        scaled_image = np.transpose(scaled_image, (2, 0, 1))
+        print("SCALE IMAGE AFTER RESHAPE:", scaled_image.shape)
         if(scaled_image.shape[0] < patch_size[0] or scaled_image.shape[1] < patch_size[1]):
             # print(scaled_image.shape,patch_size)
             # print("the test scaled image is smaller than patch size")
@@ -141,15 +146,15 @@ def evaluate( name,im,neg_image_store_flag,forest, soil, box_height, box_width):
                 if feature_type == 2:
                     feat_image = soil.extract_hough_forest_features(scaled_image, (n_feature_channels == 32))
 
-#                if feature_type == 3:
-#                    max_abs_scaler = preprocessing.MaxAbsScaler()
-#                    feat = vgg_19_conv_feat.getDeepFeatures(scaled_image)
-#                    feat_dim = np.zeros((feat.shape[2], feat.shape[0], feat.shape[1]))
-#                    for ch in range(feat.shape[2]):
-#                        scaled_feat = max_abs_scaler.fit_transform(feat[:, :, ch])
-#                        scaled_feat = scaled_feat * 255
-#                        feat_dim[ch, :, :] = scaled_feat
-#                    feat_image = np.ascontiguousarray(feat_dim[:15, :, :].astype(np.uint8))
+                # if feature_type == 3:
+                #     max_abs_scaler = preprocessing.MaxAbsScaler()
+                #     feat = vgg_19_conv_feat.getDeepFeatures(scaled_image)
+                #     feat_dim = np.zeros((feat.shape[2], feat.shape[0], feat.shape[1]))
+                #     for ch in range(feat.shape[2]):
+                #         scaled_feat = max_abs_scaler.fit_transform(feat[:, :, ch])
+                #         scaled_feat = scaled_feat * 255
+                #         feat_dim[ch, :, :] = scaled_feat
+                #     feat_image = np.ascontiguousarray(feat_dim[:15, :, :].astype(np.uint8))
 
                 probmap = forest.predict_image(feat_image,
                                                application_step_size,

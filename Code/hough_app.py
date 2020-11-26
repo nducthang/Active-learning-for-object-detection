@@ -66,10 +66,12 @@ def train():
     for idx, csvEntry in enumerate(csvEntries.split('\n')):
         if idx != 0 and csvEntry.split(',') != '{}':
             entry = csvEntry.split(',')
+            print("Entry:\n", entry)
             writeList = [entry[0][:-4] + '_pos' + extension, entry[1], entry[2].strip('"'), entry[3], entry[4],
                          entry[5][1:].replace('""', '"') + ',' + entry[6].replace('""', '"') + ',' + entry[7].replace(
                              '""', '"') + ',' + entry[8].replace('""', '"') + ',' + entry[9][:-1].replace('""', '"'),
                          entry[10].strip('"')]
+            # writeList = [entry[0][:-4] + '_pos' + extension, entry[1], entry[2].strip('"')]
             # print(writeList)
             writer.writerow(writeList)
     print('csv file written')
@@ -184,7 +186,7 @@ if __name__ == '__main__':
     test_img2 = init_images[1]
 
 #    app.run(host='0.0.0.0')
-    app.run()
+    app.run(debug=True)
 
 
 

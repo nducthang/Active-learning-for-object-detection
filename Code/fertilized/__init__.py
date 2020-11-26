@@ -4022,7 +4022,7 @@ class Soil:
         patch_size_z,
         patch_size_y,
         patch_size_x,
-        patches_luc=0
+        patches_luc=False
            ):
     r"""Class information:
     ==================

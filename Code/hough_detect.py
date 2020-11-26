@@ -148,6 +148,10 @@ def detection(im,forest, soil, box_height, box_width):
     init_start_time = time.time()
     for idx,scale in enumerate(scales):
         scaled_image = np.ascontiguousarray((rescale(im, scale) * 255.).astype('uint8'))
+        print("TEST FUNCTION")
+        print("SCALE IMAGE", scaled_image.shape)
+        scaled_image = np.transpose(scaled_image, (2, 0, 1))
+        print("SCALE IMAGE AFTER RESHAPE:", scaled_image.shape)
         if (scaled_image.shape[0] < patch_size[0] or scaled_image.shape[1] < patch_size[1]):
             print(scaled_image.shape, patch_size)
             print("the test scaled image is smaller than patch size")
@@ -304,6 +308,7 @@ def getThreshold(epoch):
             max_annot_cost_img_name = name
 
     src_image_path = os.path.join(root_dir, test_image_dir, max_annot_cost_img_name)
+    print(os.path.join(root_dir, test_image_dir, max_annot_cost_img_name))
     copied_img = Image.open(os.path.join(root_dir, test_image_dir, max_annot_cost_img_name))
     if(interactive):
         plt.title('Image with high annotation cost')
