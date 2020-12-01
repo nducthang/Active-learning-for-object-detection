@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 from PIL import Image, ImageDraw
+from matplotlib.pyplot import sca
 import skimage.color
 from skimage.transform import rescale
 from skimage.filters import gaussian
@@ -184,6 +185,7 @@ def detection(im,forest, soil, box_height, box_width):
                 probmap = scipy.misc.imresize(probmap, im.shape, mode='F')
                 probmap = scipy.ndimage.gaussian_filter(probmap, sigma=2)
                 vprobmap[:,:,idx] = probmap
+    
     # print("--- %s seconds for diff scale pred ---" % (time.time() - init_start_time))
     for bbidx in range(n_detec):
         max_score = vprobmap.max()
@@ -194,6 +196,7 @@ def detection(im,forest, soil, box_height, box_width):
         # print('bbidx: {} max_score:{}'.format(bbidx, max_score))
         # calculate the bounding box
         bb = BB()
+        print(box_width, scale)
         bbw = box_width / scales[max_sidx]
         bbh = box_height / scales[max_sidx]
         bb.luc = np.array([max_loc[1] - max_ratio * 0.5 * bbw, max_loc[0] - 0.5 * bbh])
@@ -204,6 +207,7 @@ def detection(im,forest, soil, box_height, box_width):
         vprobmap[max(0, int(max_loc[0]) - int(clear_area / 2)):int(max_loc[0]) + int(clear_area / 2),
         max(0, int(max_loc[1]) - int(clear_area / 2)):int(max_loc[1]) + int(clear_area / 2), :] = 0
     #print('im_scores',im_scores)
+    print(bbs)
     return bbs
 
 
@@ -269,6 +273,7 @@ def getThreshold(epoch):
             opt_tao = t
             min_cost = cost
     np.save("opt_thresh_obj.npy", opt_tao)
+    # print("OPT_TAO",opt_tao)
     opt_tao = np.load("opt_thresh_obj.npy")
     tp_cdf = (gamma.cdf((opt_tao), tp_shape, tp_loc, tp_scale))
     fn_cdf = (1 - gamma.cdf((opt_tao), fp_shape, fp_loc, fp_scale))
@@ -309,16 +314,23 @@ def getThreshold(epoch):
 
     src_image_path = os.path.join(root_dir, test_image_dir, max_annot_cost_img_name)
     print(os.path.join(root_dir, test_image_dir, max_annot_cost_img_name))
-    copied_img = Image.open(os.path.join(root_dir, test_image_dir, max_annot_cost_img_name))
-    if(interactive):
-        plt.title('Image with high annotation cost')
-        plt.imshow(copied_img)
-        plt.show('Image with high annotation cost')
-    dst_image_path = os.path.join(root_dir, train_image_dir, max_annot_cost_img_name[:-4] + '_pos'+extension)
+
+    # print("TEST root_dir:", root_dir)
+    # print("TEST test_image_dir:", test_image_dir)
+    # print("TEST max_annot_cost_img_name:", max_annot_cost_img_name)
+
+    # copied_img = Image.open(os.path.join(root_dir, test_image_dir, max_annot_cost_img_name))
+
+    # if(interactive):
+    #     plt.title('Image with high annotation cost')
+    #     plt.imshow(copied_img)
+    #     plt.show('Image with high annotation cost')
+    # dst_image_path = os.path.join(root_dir, train_image_dir, max_annot_cost_img_name[:-4] + '_pos'+extension)
+
     # print('max annot cost', max_annot_cost, 'image name', max_annot_cost_img_name)
     print()
-    shutil.copy(src_image_path, dst_image_path)
-    os.remove(src_image_path)
+    # shutil.copy(src_image_path, dst_image_path)
+    # os.remove(src_image_path)
     # print("--- %s seconds for getThreshold ---" % (time.time() - getThreshold_start_time))
     return opt_tao,max_annot_cost,src_image_path
 

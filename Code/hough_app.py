@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Jan  3 17:17:58 2018
-
-@author: priyanka
-"""
 import hough_detect
 import hough_train
 import hough_eval
@@ -13,7 +6,6 @@ import glob
 import shutil
 from PIL import Image
 import matplotlib
-# matplotlib.use('Agg')
 matplotlib.use('TKAgg')
 from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
@@ -21,10 +13,7 @@ import os
 import numpy as np
 from flask import Flask, render_template, jsonify,request,send_file,make_response
 import os
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO,BytesIO
+from io import StringIO,BytesIO
 import random
 import time
 import csv
@@ -126,34 +115,44 @@ def addPlot():
 
 
 if __name__ == '__main__':
-    # remove earlier copied files eval
-    images = []
-    num_init_images = 2
+    images = [] # danh sách hình ảnh
+    num_init_images = 2 # số ảnh khởi tạo
+    # root_dir = './leaf/'
+    # eval_image_dir = 'eval_images'
+    # Lấy danh sách tất cả các file có trong thư mục eval_images
     files = glob.glob(os.path.join(root_dir, eval_image_dir + '/*'))
+    # xóa hết các file trong thư mục eval_images
     for f in files:
         os.remove(f)
 
-        # remove earlier copied files test
+    # root_dir = './leaf/'
+    # test_image_dỉr = 'test_images'
     files = glob.glob(os.path.join(root_dir, test_image_dir + '/*'))
+    # xóa hết các file trong thư mục test_images
     for f in files:
         os.remove(f)
 
+    # root_dir = './leaf/'
+    # all_image_dir = 'all_images'
+    # extension = '.png'
+    # Lấy tất cả các đường dẫn ảnh .png trong thư mục all_images
     image_path = os.path.join(root_dir, all_image_dir, '*' + extension)
-    print(image_path)
+    # Tách ra lấy mỗi tên file ảnh và lưu vào list images
     for filename in glob.glob(image_path):
         img_name = filename.replace(root_dir + '' + all_image_dir + '/', "")
         images.append(img_name)
+    
+    # Chia list images thành bộ x và x_test
     x, x_test, _, _ = train_test_split(images, images, test_size=0.20, train_size=0.80)
-    print(len(x))
-    print(len(x_test))
 
+    # Copy các ảnh x từ thư mục all_images vào thư mục test_images
     for idx,img_name in enumerate(x):
         train_flag = ''
         src_image_path = os.path.join(root_dir, all_image_dir,img_name)
         dst_img_path = os.path.join(root_dir,test_image_dir,img_name[:-4]+train_flag+extension)
         shutil.copy(src_image_path, dst_img_path)
 
-
+    # copy các ảnh x_test từ thư mục all_images vào thư mục eval_images
     for img_name in x_test:
         src_image_path = os.path.join(root_dir, all_image_dir,img_name)
         dst_img_path = os.path.join(root_dir,eval_image_dir,img_name)
