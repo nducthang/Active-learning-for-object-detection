@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # %% Imports
 from __future__ import print_function
+import fertilized
 
 from matplotlib.pyplot import sca
 
-from hough_preferences import scales, ratios, root_dir,   \
-    test_offset, n_pos, n_threads, min_prob_threshold, n_feature_channels, \
-    patch_size, application_step_size, use_reduced_grid, dataset_flag, forest_name, feat_name, n_detec, clear_area, \
-    num_samples, eps, interactive, eval_image_dir, eval_annot_dir, fertilized_sys_path,extension,train_image_dir,train_annot_dir,iou,deep_features_path,feature_type,exp_dir
+from hough_preferences import scales, ratios, root_dir, min_prob_threshold, n_feature_channels, \
+    patch_size, application_step_size, use_reduced_grid, forest_name, n_detec, interactive, eval_image_dir, \
+    eval_annot_dir, fertilized_sys_path, extension, iou, feature_type
 
 from PIL import Image, ImageDraw
 import skimage.color
@@ -39,19 +39,22 @@ import csv
 
 
 sys.path.insert(0, fertilized_sys_path)
-import fertilized
-sys.path.insert(0, deep_features_path)
+# sys.path.insert(0, deep_features_path)
 #import vgg_19_conv_feat
 #from sklearn import preprocessing
-############BB class
+# BB class
+
+
 class BB():
     def __init__(self):
         self.luc = -1
         self.rlc = -1
         self.score = -1
-        self.label=''
+        self.label = ''
 
-#############Plots
+# Plots
+
+
 def plotDetections(luc, rlc, img, c):
     draw = ImageDraw.Draw(img)
     draw.line(((luc[0], luc[1]), (rlc[0], luc[1])), fill=c, width=6)
@@ -67,19 +70,22 @@ def plotBBs(bb, draw, orig_img, img, c):
     bb[3] = max(0, min(bb[3], orig_img.shape[0] - 1))
     bb[2] = max(0, min(bb[2], orig_img.shape[1] - 1))
 
-    draw.line(((int(bb[0]), int(bb[1])), (int(bb[0]), int(bb[3]))), fill=c, width=6)
-    draw.line(((int(bb[0]), int(bb[3])), (int(bb[2]), int(bb[3]))), fill=c, width=6)
-    draw.line(((int(bb[2]), int(bb[3])), (int(bb[2]), int(bb[1]))), fill=c, width=6)
-    draw.line(((int(bb[2]), int(bb[1])), (int(bb[0]), int(bb[1]))), fill=c, width=6)
+    draw.line(((int(bb[0]), int(bb[1])),
+               (int(bb[0]), int(bb[3]))), fill=c, width=6)
+    draw.line(((int(bb[0]), int(bb[3])),
+               (int(bb[2]), int(bb[3]))), fill=c, width=6)
+    draw.line(((int(bb[2]), int(bb[3])),
+               (int(bb[2]), int(bb[1]))), fill=c, width=6)
+    draw.line(((int(bb[2]), int(bb[1])),
+               (int(bb[0]), int(bb[1]))), fill=c, width=6)
     plt.imshow(img)
-
 
 
 def init():
     init_start_time = time.time()
     widths = []
     heights = []
-    images ={}
+    images = {}
 
     # %% Load the forest.
 #    print(root_dir+''+forest_name)
@@ -91,7 +97,7 @@ def init():
     annot_path = os.path.join(root_dir, eval_annot_dir, "via_region_data.csv")
 #    print(image_path)
     for filename in glob.glob(image_path):
-#        print(filename)
+        #        print(filename)
         img_name = filename.replace(root_dir + '' + eval_image_dir + '/', "")
         images[img_name] = np.array(Image.open(filename))
         assert not images[img_name] is None
@@ -106,7 +112,7 @@ def init():
         for i in indices:
             w = (ast.literal_eval(bbs[i]).get('width'))
             h = (ast.literal_eval(bbs[i]).get('height'))
-            if (w!= None and h!= None):
+            if (w != None and h != None):
                 widths.append(w)
                 heights.append(h)
     # %% Determine mean box size of training set.
@@ -114,10 +120,10 @@ def init():
     box_height = statistics.median(heights)
     # print('wh',box_width,box_height)
     print("--- %s seconds for init ---" % (time.time() - init_start_time))
-    return forest,soil,box_height,box_width,images
+    return forest, soil, box_height, box_width, images
 
 
-def evaluate( name,im,neg_image_store_flag,forest, soil, box_height, box_width):
+def evaluate(name, im, neg_image_store_flag, forest, soil, box_height, box_width):
     true_pos_bb = []
     false_pos_bb = []
     false_neg_bb = []
@@ -129,7 +135,8 @@ def evaluate( name,im,neg_image_store_flag,forest, soil, box_height, box_width):
     vprobmap = np.ones((im.shape[0], im.shape[1], len(scales)))
 
     for idx, scale in enumerate(scales):
-        scaled_image = np.ascontiguousarray((rescale(im, scale) * 255.).astype('uint8'))
+        scaled_image = np.ascontiguousarray(
+            (rescale(im, scale) * 255.).astype('uint8'))
         print("SCALE IMAGE", scaled_image.shape)
         scaled_image = np.transpose(scaled_image, (2, 0, 1))
         print("SCALE IMAGE AFTER RESHAPE:", scaled_image.shape)
@@ -140,11 +147,13 @@ def evaluate( name,im,neg_image_store_flag,forest, soil, box_height, box_width):
         else:
             for ratio in ratios:
                 if feature_type == 1:
-                    feat_image = np.repeat(np.ascontiguousarray(np.rollaxis(scaled_image, 2, 0).astype(np.uint8))[:3,:,:],5,0)
+                    feat_image = np.repeat(np.ascontiguousarray(np.rollaxis(
+                        scaled_image, 2, 0).astype(np.uint8))[:3, :, :], 5, 0)
                     # feat_image = np.repeat(soil.extract_hough_forest_features(scaled_image, (n_feature_channels == 32))[:3, :, :],5,1)
 
                 if feature_type == 2:
-                    feat_image = soil.extract_hough_forest_features(scaled_image, (n_feature_channels == 32))
+                    feat_image = soil.extract_hough_forest_features(
+                        scaled_image, (n_feature_channels == 32))
 
                 # if feature_type == 3:
                 #     max_abs_scaler = preprocessing.MaxAbsScaler()
@@ -170,29 +179,33 @@ def evaluate( name,im,neg_image_store_flag,forest, soil, box_height, box_width):
         max_score = vprobmap.max()
         # print(max_score)
         # if max_score > 0.32:
-        max_loc = np.array(np.unravel_index(np.argmax(vprobmap), vprobmap.shape)[:2])
-        max_sidx = np.array(np.unravel_index(np.argmax(vprobmap), vprobmap.shape)[2])
+        max_loc = np.array(np.unravel_index(
+            np.argmax(vprobmap), vprobmap.shape)[:2])
+        max_sidx = np.array(np.unravel_index(
+            np.argmax(vprobmap), vprobmap.shape)[2])
         max_ratio = 1  # TODO: works only for aspect ratio=1
         # print('bbidx: {} max_score:{}'.format(bbidx, max_score))
         # calculate the bounding box
         bb = BB()
         bbw = box_width / scales[max_sidx]
         bbh = box_height / scales[max_sidx]
-        bb.luc = np.array([max_loc[1] - max_ratio * 0.5 * bbw, max_loc[0] - 0.5 * bbh])
-        bb.rlc = np.array([max_loc[1] + max_ratio * 0.5 * bbw, max_loc[0] + 0.5 * bbh])
+        bb.luc = np.array([max_loc[1] - max_ratio * 0.5 *
+                           bbw, max_loc[0] - 0.5 * bbh])
+        bb.rlc = np.array([max_loc[1] + max_ratio * 0.5 *
+                           bbw, max_loc[0] + 0.5 * bbh])
         bb.score = max_score
         # im_scores.append(max_score)
         bbs.append(bb)
         # non maximal suppression
         vprobmap[max(0, int(max_loc[0]) - int(bbw / 2)):int(max_loc[0]) + int(bbw / 2),
-        max(0, int(max_loc[1]) - int(bbh / 2)):int(max_loc[1]) + int(bbh / 2), :] = 0
+                 max(0, int(max_loc[1]) - int(bbh / 2)):int(max_loc[1]) + int(bbh / 2), :] = 0
     annot_path = os.path.join(root_dir, eval_annot_dir, "via_region_data.csv")
     im = Image.fromarray(im)
     reader = pd.read_csv(annot_path)
     files = reader['#filename']
     bbs_attr = reader['region_shape_attributes']
     gt_bbs = []
-    #if im_idx < n_pos:
+    # if im_idx < n_pos:
     indices = [i for i, x in enumerate(files) if x == name]
     for i in indices:
         l = (ast.literal_eval(bbs_attr[i]).get('x'))
@@ -206,7 +219,7 @@ def evaluate( name,im,neg_image_store_flag,forest, soil, box_height, box_width):
         except:
             print('no annotation entry')
             continue
-    for idx,bb in enumerate(bbs):
+    for idx, bb in enumerate(bbs):
         min_iou = 100
         gt_box_ele = None
         d_box_ele = None
@@ -225,26 +238,32 @@ def evaluate( name,im,neg_image_store_flag,forest, soil, box_height, box_width):
                 else:
                     intersect_t = max(t, min(b, bb.luc[1]))
                     intersect_b = min(b, max(t, bb.rlc[1]))
-                    area_overlap = float((intersect_r - intersect_l) * (intersect_b - intersect_t))
+                    area_overlap = float(
+                        (intersect_r - intersect_l) * (intersect_b - intersect_t))
                     assert area_overlap <= area_gt
-                    area_det = float((bb.rlc[0] - bb.luc[0]) * (bb.rlc[1] - bb.luc[1]))
-                    assert area_overlap <= area_det, '%f, %f' % (area_overlap, area_det)
-                total_overlap = area_overlap / (area_det + area_gt - area_overlap)
+                    area_det = float(
+                        (bb.rlc[0] - bb.luc[0]) * (bb.rlc[1] - bb.luc[1]))
+                    assert area_overlap <= area_det, '%f, %f' % (
+                        area_overlap, area_det)
+                total_overlap = area_overlap / \
+                    (area_det + area_gt - area_overlap)
                 if (total_overlap >= iou and min_iou > total_overlap):
                     pos_correct += 1
                     min_iou = total_overlap
                     gt_box_ele = [l, t, r, b]
-                    d_box_ele = [bb.luc[0], bb.luc[1], bb.rlc[0], bb.rlc[1], bb.score]
+                    d_box_ele = [bb.luc[0], bb.luc[1],
+                                 bb.rlc[0], bb.rlc[1], bb.score]
             except:
                 pass
         if (d_box_ele != None):
             true_pos_bb.append(d_box_ele)
             # im_truth.append(1)
             bbs[idx].label = "tp"
-        if min_iou != 100: #if bb overlaps
+        if min_iou != 100:  # if bb overlaps
             gt_bbs.remove(gt_box_ele)
         else:
-            false_pos_bb.append([bb.luc[0], bb.luc[1], bb.rlc[0], bb.rlc[1], bb.score])
+            false_pos_bb.append(
+                [bb.luc[0], bb.luc[1], bb.rlc[0], bb.rlc[1], bb.score])
             bbs[idx].label = "fp"
             # im_truth.append(0)
 
@@ -293,13 +312,14 @@ def evaluate( name,im,neg_image_store_flag,forest, soil, box_height, box_width):
         for bb in true_pos_bb:
             plotBBs(bb, draw, orig_img, img_tp, c="red")
         for bb in false_pos_bb:
-            temp_img=img.copy()
+            temp_img = img.copy()
             crop_img = temp_img.crop((bb[0], bb[1], bb[2], bb[3]))
 #            crop_img.save(os.path.join(root_dir, eval_image_dir, time.strftime("%Y%m%d-%H%M%S")+"_auto_neg"+extension))
             plotBBs(bb, draw, orig_img, img_tp, c="blue")
         for bb in false_neg_bb:
             if (len(bb) != 0):
-                plotDetections((bb[0], bb[1]), (bb[2], bb[3]), img_tp, c="cyan")
+                plotDetections(
+                    (bb[0], bb[1]), (bb[2], bb[3]), img_tp, c="cyan")
         plt.axis('off')
         plt.savefig(time.strftime("%Y%m%d-%H%M%S") + extension)
         plt.title("Detections")
@@ -348,7 +368,8 @@ def precision_recall_curve(vvbb):
         precision[idx] = tp / (tp + fp + 1e-10)
 
     # sort arrays as per decreasing recall
-    indices = [i[0] for i in sorted(enumerate(recall), key=lambda x: x[1], reverse=True)]
+    indices = [i[0] for i in sorted(
+        enumerate(recall), key=lambda x: x[1], reverse=True)]
     recall = recall[indices]
     precision = precision[indices]
     thrs = thrs[indices]
@@ -356,29 +377,33 @@ def precision_recall_curve(vvbb):
     # post process precision
     # print(recall)
     # print(precision)
-    for idx in range(1,len(precision)):
-        if(precision[idx]<precision[idx-1]):
+    for idx in range(1, len(precision)):
+        if(precision[idx] < precision[idx-1]):
             precision[idx] = precision[idx - 1]
 
     auc = 0
-    for idx in range(1,len(precision)):
-        auc += 0.5 * np.abs((precision[idx-1]+precision[idx]) * (recall[idx-1]-recall[idx]))
+    for idx in range(1, len(precision)):
+        auc += 0.5 * \
+            np.abs((precision[idx-1]+precision[idx])
+                   * (recall[idx-1]-recall[idx]))
     # print("mAP : ", auc)
     #print("--- %s seconds for pr curve ---" % (time.time() - prcurve_start_time))
     return precision, recall, thrs, auc
 
+
 def runEvaluate():
     runeval_start_time = time.time()
-    all_bbs =[]
-    forest, soil, box_height, box_width,images = init()
+    all_bbs = []
+    forest, soil, box_height, box_width, images = init()
     eval_start_time = time.time()
     for idx, (name, im) in enumerate(images.items()):
-        neg_image_store_flag =1
+        neg_image_store_flag = 1
 #        if idx % 20 == 0:
 #            neg_image_store_flag =1
 #        else:
 #            neg_image_store_flag = 0
-        bbs = evaluate( name,im,neg_image_store_flag,forest, soil, box_height, box_width)
+        bbs = evaluate(name, im, neg_image_store_flag,
+                       forest, soil, box_height, box_width)
 
         all_bbs.append(bbs)
         # im_idx = im_idx + 1

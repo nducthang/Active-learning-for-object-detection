@@ -6,7 +6,7 @@ import fertilized
 from hough_preferences import patch_size, n_trees, min_samples_per_split, \
     max_depth, n_splits, n_thresholds, n_samples_pos, n_samples_neg, \
     n_feature_channels, max_patches_per_node, n_threads, root_dir, \
-    train_image_dir, train_annot_dir, fertilized_sys_path, extension, feat_name, forest_name, deep_features_path, feature_type
+    train_image_dir, train_annot_dir, fertilized_sys_path, extension, feat_name, forest_name, feature_type
 
 from PIL import Image
 import skimage.color
@@ -42,15 +42,22 @@ def plotBBs(bb, draw, orig_img, img, c):
 
 
 def init():
+    # Lấy danh sách tất cả các ảnh positive và negative
+    # root_dir = './leaf/'
+    # train_image_dỉr = '/train_images'
     pos_image_path = os.path.join(root_dir, train_image_dir, '*_pos'+extension)
     neg_image_path = os.path.join(root_dir, train_image_dir, '*_neg'+extension)
+    # Lấy đường dẫn file annotation
+    # train_annot_dỉr = '/train_boundingboxes'
     annot_path = os.path.join(root_dir, train_annot_dir, "via_region_data.csv")
 
+    # Hiển thị thông tin số lượng ảnh positive và negative
     train_pos_ids = len(glob.glob(pos_image_path))
     train_neg_ids = len(glob.glob(neg_image_path))
-
     print("Number of positive images", train_pos_ids)
     print("Number of negative images", train_neg_ids)
+
+    # Trả về: Đường dẫn ảnh positive, đường dẫn ảnh negative, đường dẫn file annotation, số ảnh positve, số ảnh negative
     return pos_image_path, neg_image_path, annot_path, train_pos_ids, train_neg_ids
 
 
