@@ -1,4 +1,5 @@
 import time
+from numpy.lib import index_tricks
 from skimage import transform
 from sklearn import preprocessing
 from skimage import img_as_uint
@@ -65,91 +66,88 @@ def trainHoughForests():
     # %% Positive images.
     pos_image_path, neg_image_path, annot_path, train_pos_ids, train_neg_ids = init()
     # Patch descriptions
+    # n_samples_pos = 25, n_samples_neg = 25
+    # train_pos_ids = 2 (số ảnh positive), train_neg_ids = 3 (số ảnh negative)
+    # annotations shape = (125, 5)
     annotations = np.zeros(
         (n_samples_pos * train_pos_ids + n_samples_neg * train_neg_ids, 5), dtype='int16')
     images = []
     pos_number = 0
+    # Duyệt từng file positive
     for filename in glob.glob(pos_image_path):
-        #        print(filename)
         img_name = filename.replace(root_dir + '' + train_image_dir + '/', "")
-        #assert not images[-1] is None
         reader = pd.read_csv(annot_path)
         files = reader['#filename']
+        # Các thuộc tính của bbs: name, x, y, width, height
         bbs = reader['region_shape_attributes']
-        # print('files',files)
+        # Các chỉ số hàng tương ứng với file đang xét
         indices = [i for i, x in enumerate(files) if x == img_name]
-        # print(img_name)
+
         images.append(np.array(Image.open(filename)))
         for i in indices:
+            # Lấy thông tin của từng bounding box
+            # ast.literal_eval để kiểm tra chặt hơn (bbs[i] phải là một kiểu của python)
+            # left, top, width, height
             l = (ast.literal_eval(bbs[i]).get('x'))
             t = (ast.literal_eval(bbs[i]).get('y'))
             w = (ast.literal_eval(bbs[i]).get('width'))
             h = (ast.literal_eval(bbs[i]).get('height'))
             #print(l, t, w, h)
             if (l != None and t != None and w != None and h != None):
-
+                # right, bottom
                 r = l + w
                 b = t + h
                 try:
-                    # box is big enough to extract patches
+                    # Kiểm tra xem bounding box có đủ lớn để trích xuất hay không
+                    # (.,., 0) đánh dấu pos_number
                     assert t + patch_size[0] // 2 <= b - patch_size[0] // 2
                     annotations[pos_number *
                                 n_samples_pos: (pos_number + 1) * n_samples_pos, 0] = pos_number
-                    #print(pos_number * n_samples_pos,'to',(pos_number + 1) * n_samples_pos, 0,'is',pos_number)
+                    # print(pos_number * n_samples_pos,'to',(pos_number + 1) * n_samples_pos, 0,'is',pos_number)
+                    # Result:
+                    # 0 to 25 0 is 0
+                    # 0 to 25 0 is 0
+                    # 25 to 50 0 is 1
+                    # 25 to 50 0 is 1
+                    # 25 to 50 0 is 1
                     try:
-                        annotations[pos_number * n_samples_pos: (pos_number + 1) * n_samples_pos, 1] = \
-                            np.random.randint(l + patch_size[1] // 2,
-                                              r - patch_size[1] // 2,
-                                              size=(n_samples_pos,))  # get rand x positions in obj
-                        # print(
-                        # pos_number * n_samples_pos, 'to', (pos_number + 1) * n_samples_pos, 1, 'is', np.random.randint(l + patch_size[1] // 2,
-                        #                      r - patch_size[1] // 2,
-                        #                      size=(n_samples_pos,)))
-                        # print(np.random.randint(l + patch_size[1] // 2,
-                        #                       r - patch_size[1] // 2,
-                        #                       size=(n_samples_pos,)))
+                        # Lấy ngẫu nhiên các vị trí x positive trong box
+                        # Theo setting là 25 vị trí = n_samples_pos
+                        # (.,., 1) Lưu vị trí x được lấy
+                        annotations[pos_number * n_samples_pos: (pos_number + 1) * n_samples_pos, 1] = np.random.randint(
+                            l + patch_size[1] // 2, r - patch_size[1] // 2, size=(n_samples_pos,))  # get rand x positions in obj
                     except:
                         print(
                             'Please check annotations, object size too small in x axis')
                         continue
-                        # annotations[pos_number * n_samples_pos: (pos_number + 1) * n_samples_pos, 1] = \
-                        #     np.random.randint(l + patch_size[1] // 2,
-                        #                       (r - patch_size[1] // 2) + 1,
-                        #                       size=(n_samples_pos,))
-                        # print('error 1')
+                    
+                    # Kiểm tra lại tọa độ x xem thỏa mãn không
+                    assert np.all(annotations[pos_number * n_samples_pos: (pos_number + 1) *
+                                              n_samples_pos, 1] - l >= patch_size[1] // 2)  # check x position in obj x min
 
-                    assert np.all(
-                        annotations[pos_number * n_samples_pos: (pos_number + 1) * n_samples_pos, 1] - l >= patch_size[
-                            1] // 2)  # check x position in obj x min
-
-                    assert np.all(
-                        r - annotations[pos_number * n_samples_pos: (pos_number + 1) * n_samples_pos, 1] >= patch_size[
-                            1] // 2)  # check x position in obj x max
+                    assert np.all(r - annotations[pos_number * n_samples_pos: (
+                        pos_number + 1) * n_samples_pos, 1] >= patch_size[1] // 2)  # check x position in obj x max
                     try:
+                        # Lấy ngẫu nhiên các vị trí y positive trong box
+                        # (,. ,. , 2) Lưu vị trí y được lấy
                         annotations[pos_number * n_samples_pos: (pos_number + 1) * n_samples_pos, 2] = \
                             np.random.randint(t + patch_size[0] // 2,
                                               b - patch_size[0] // 2,
                                               size=(n_samples_pos,))  # get rand y positions in obj
-                        # print(pos_number * n_samples_pos, 'to', (pos_number + 1) * n_samples_pos, 2, 'is',
-                        #      np.random.randint(t + patch_size[0] // 2,
-                        #                        b - patch_size[0] // 2,
-                        #                        size=(n_samples_pos,))
-                        #      )
+
                     except:
-                        # annotations[pos_number * n_samples_pos: (pos_number + 1) * n_samples_pos, 2] = \
-                        #     np.random.randint(t + patch_size[0] // 2,
-                        #                       (b - patch_size[0] // 2) + 1,
-                        #                       size=(n_samples_pos,))
-                        # print('error 2')
                         print(
                             'Please check annotations, object size too small in y axis')
                         continue
+
+                    # Kiểm tra lại tọa độ y xem thỏa mãn không
                     assert np.all(
                         annotations[pos_number * n_samples_pos: (pos_number + 1) * n_samples_pos, 2] - t >= patch_size[
                             0] // 2)  # check y position in obj y min
                     assert np.all(
                         b - annotations[pos_number * n_samples_pos: (pos_number + 1) * n_samples_pos, 2] >= patch_size[
                             0] // 2)  # check y position in obj y max
+                    
                     annotations[pos_number * n_samples_pos: (pos_number + 1) * n_samples_pos, 3] = \
                         int(float(l + r) / 2.) - annotations[
                         pos_number * n_samples_pos: (pos_number + 1) * n_samples_pos, 1]  # Distance to centre x
