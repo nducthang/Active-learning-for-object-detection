@@ -99,7 +99,7 @@ def trainHoughForests():
                 b = t + h
                 try:
                     # Kiểm tra xem bounding box có đủ lớn để trích xuất hay không
-                    # (.,., 0) đánh dấu pos_number
+                    # (.,., 0) đánh dấu pos_number, đánh ID ảnh
                     assert t + patch_size[0] // 2 <= b - patch_size[0] // 2
                     annotations[pos_number *
                                 n_samples_pos: (pos_number + 1) * n_samples_pos, 0] = pos_number
@@ -120,7 +120,7 @@ def trainHoughForests():
                         print(
                             'Please check annotations, object size too small in x axis')
                         continue
-                    
+
                     # Kiểm tra lại tọa độ x xem thỏa mãn không
                     assert np.all(annotations[pos_number * n_samples_pos: (pos_number + 1) *
                                               n_samples_pos, 1] - l >= patch_size[1] // 2)  # check x position in obj x min
@@ -147,21 +147,16 @@ def trainHoughForests():
                     assert np.all(
                         b - annotations[pos_number * n_samples_pos: (pos_number + 1) * n_samples_pos, 2] >= patch_size[
                             0] // 2)  # check y position in obj y max
-                    
+
+                    # (.,., 3) lưu khoảng cách từ trung tâm trục x đến các vị trí được chọn ngẫu nhiên của trục x
                     annotations[pos_number * n_samples_pos: (pos_number + 1) * n_samples_pos, 3] = \
                         int(float(l + r) / 2.) - annotations[
                         pos_number * n_samples_pos: (pos_number + 1) * n_samples_pos, 1]  # Distance to centre x
 
-                    # print(pos_number * n_samples_pos, 'to', (pos_number + 1) * n_samples_pos, 3, 'is', int(float(l + r) / 2.) - annotations[
-                    #                             pos_number * n_samples_pos: (pos_number + 1) * n_samples_pos, 1])
-
+                    # (.,.,, 4) lưu khoảng cách từ trung tâm trục y đến các vị trí được chọn ngẫu nhiên của trục y
                     annotations[pos_number * n_samples_pos: (pos_number + 1) * n_samples_pos, 4] = \
                         int(float(t + b) / 2.) - annotations[
                         pos_number * n_samples_pos: (pos_number + 1) * n_samples_pos, 2]  # Distance to centre y
-
-                    # print(pos_number * n_samples_pos, 'to', (pos_number + 1) * n_samples_pos, 4, 'is', int(float(t + b) / 2.) - annotations[
-                    #                             pos_number * n_samples_pos: (pos_number + 1) * n_samples_pos, 2])
-                    # print(annotations)
                 except:
                     print('Please check annotations')
                     continue
@@ -169,30 +164,33 @@ def trainHoughForests():
                 print("annotation not present in csv file")
         pos_number = pos_number + 1
 
+    # pos_offset = 25 * 2 -  số patches positive lấy ra từ ảnh
     pos_offset = n_samples_pos * train_pos_ids
+
     # %% Negative images.
     neg_number = 0
+    # Duyệt từng file ảnh negative
     for filename in glob.glob(neg_image_path):
         images.append(np.array(Image.open(filename)))
         img_name = filename.replace(root_dir + '' + train_image_dir + '/', "")
         assert not images[-1] is None
+        # Đánh dấu ID ảnh
         annotations[pos_offset + neg_number * n_samples_neg: pos_offset + (neg_number + 1) * n_samples_neg,
                     0] = neg_number + train_pos_ids
-        annotations[pos_offset + neg_number * n_samples_neg: pos_offset + (neg_number + 1) * n_samples_neg, 1] = \
-            np.random.randint(patch_size[1] // 2,
-                              images[-1].shape[1] - patch_size[1] // 2,
-                              size=(n_samples_neg,))
-        annotations[pos_offset + neg_number * n_samples_neg: pos_offset + (neg_number + 1) * n_samples_neg, 2] = \
-            np.random.randint(patch_size[0] // 2,
-                              images[-1].shape[0] - patch_size[0] // 2,
-                              size=(n_samples_neg,))
-        neg_number = neg_number+1
-    # %% Feature extraction.
-    # can specify input, feature, annotation and return datatypes here.
-    # soil = fertilized.Soil('uint8', 'int16', 'int16', fertilized.Result_Types.hough_map)
-    # print(annotations)
+        # Lấy ngẫu nhiên vị trí x cho negative
+        annotations[pos_offset + neg_number * n_samples_neg: pos_offset + (neg_number + 1) * n_samples_neg, 1] = np.random.randint(
+            patch_size[1] // 2, images[-1].shape[1] - patch_size[1] // 2, size=(n_samples_neg,))
+        # Lấy ngẫu nhiên vị trí y cho negative
+        annotations[pos_offset + neg_number * n_samples_neg: pos_offset + (neg_number + 1) * n_samples_neg, 2] = np.random.randint(
+            patch_size[0] // 2, images[-1].shape[0] - patch_size[0] // 2, size=(n_samples_neg,))
+        neg_number = neg_number + 1
+
+    # %% Feature extraction. - Khởi tạo thư viện hough forest
     soil = fertilized.Soil('uint8', 'int16', 'int16',
                            fertilized.Result_Types.hough_map)
+    
+    # Chuyển ảnh sang định dạng của openCv để chạy được thư viện Hough forest
+    # Ảnh đầu vào phải là định dạng BGR
     cvimages = []
     for im in images:
         if im.ndim == 2:
@@ -200,20 +198,23 @@ def trainHoughForests():
         else:
             cvimages.append(np.ascontiguousarray(im[:, :, :3]))
 
+    feat_images = None
     if feature_type == 1:
         print('RGB')
-        feat_images = [np.repeat(np.ascontiguousarray(np.rollaxis(
-            im, 2, 0).astype(np.uint8))[:3, :, :], 5, 0) for im in cvimages]
+        feat_images = [np.repeat(np.ascontiguousarray(np.rollaxis(im, 2, 0).astype(np.uint8))[:3, :, :], 5, 0) for im in cvimages]
     if feature_type == 2:
         print('HOG')
-        feat_images = [soil.extract_hough_forest_features(
-            im, full=(n_feature_channels == 32)) for im in cvimages]
-        print("shape", feat_images[0].shape)
-#        for i in range(15):
-#            plt.imshow(feat_images[0][i,:,:])
-#            plt.axis('off')
-#            plt.savefig(str(i)+'.png')
-#            plt.show()
+        # Extract the Hough forest features. If `full` is set, uses the
+        # 32 feature channels used by Juergen Gall in his original publications,
+        # else use 15 feature channels as used by Matthias Dantone.
+        # The image must be in OpenCV (BGR) channel format!
+        feat_images = [soil.extract_hough_forest_features(im, full=(n_feature_channels == 32)) for im in cvimages]
+        # print("shape", feat_images[0].shape)
+        # for i in range(15):
+        #    plt.imshow(feat_images[0][i,:,:])
+        #    plt.axis('off')
+        #    plt.savefig(str(i)+'.png')
+        #    plt.show()
 
 #    if feature_type == 3:
 #        ## deep features
@@ -260,15 +261,21 @@ def trainHoughForests():
 #    plt.imshow(feat_images[0][:,:,11:15])
 #    plt.show()
 
-    with open(root_dir+''+feat_name, 'wb') as f:
+    # Lưu đặc trưng được trích xuất
+    # feat_name = 'feat_images.pkl'
+    with open(root_dir + '' + feat_name, 'wb') as f:
         pickle.dump(feat_images, f)
+    
+    
     # %% Forest construction.
+    # Xây dựng Forest
     random_init = 1
-    trees = []
+    trees = [] # danh sách cây
     for tree_idx in range(n_trees):
         print('Constructing and training tree %d.' % (tree_idx))
         random_seed = tree_idx * 2 + 1 + random_init * n_trees
         # uses the patch locations to map all feature requests by the trees or forests to the correct positions in the images.
+        # Sử dụng các vị trí patch để ánh xạ đến tất cả các đặc trưng yêu cầu bởi cây hoặc rừng tới vị trí đúng trên ảnh
         sman = soil.NoCopyPatchSampleManager(
             feat_images,
             annotations,
@@ -295,6 +302,8 @@ def trainHoughForests():
         tree.fit_dprov(dprov, True)
         trees.append(tree)
     forest = soil.CombineTrees(trees)
+
+    # Lưu lại mô hình được huấn luyện
     with open(root_dir+''+forest_name, 'wb') as df:
         pickle.dump(forest, df,  protocol=2)
 
