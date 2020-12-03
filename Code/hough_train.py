@@ -25,23 +25,6 @@ sys.path.insert(0, fertilized_sys_path)
 np.set_printoptions(threshold=sys.maxsize)
 
 
-def plotBBs(bb, draw, orig_img, img, c):
-    bb[1] = max(0, min(bb[1], orig_img.shape[0] - 1))
-    bb[0] = max(0, min(bb[0], orig_img.shape[1] - 1))
-    bb[3] = max(0, min(bb[3], orig_img.shape[0] - 1))
-    bb[2] = max(0, min(bb[2], orig_img.shape[1] - 1))
-
-    draw.line(((int(bb[0]), int(bb[1])),
-               (int(bb[0]), int(bb[3]))), fill=c, width=6)
-    draw.line(((int(bb[0]), int(bb[3])),
-               (int(bb[2]), int(bb[3]))), fill=c, width=6)
-    draw.line(((int(bb[2]), int(bb[3])),
-               (int(bb[2]), int(bb[1]))), fill=c, width=6)
-    draw.line(((int(bb[2]), int(bb[1])),
-               (int(bb[0]), int(bb[1]))), fill=c, width=6)
-    plt.imshow(img)
-
-
 def init():
     # Lấy danh sách tất cả các ảnh positive và negative
     # root_dir = './leaf/'
@@ -188,7 +171,7 @@ def trainHoughForests():
     # %% Feature extraction. - Khởi tạo thư viện hough forest
     soil = fertilized.Soil('uint8', 'int16', 'int16',
                            fertilized.Result_Types.hough_map)
-    
+
     # Chuyển ảnh sang định dạng của openCv để chạy được thư viện Hough forest
     # Ảnh đầu vào phải là định dạng BGR
     cvimages = []
@@ -201,14 +184,16 @@ def trainHoughForests():
     feat_images = None
     if feature_type == 1:
         print('RGB')
-        feat_images = [np.repeat(np.ascontiguousarray(np.rollaxis(im, 2, 0).astype(np.uint8))[:3, :, :], 5, 0) for im in cvimages]
+        feat_images = [np.repeat(np.ascontiguousarray(np.rollaxis(
+            im, 2, 0).astype(np.uint8))[:3, :, :], 5, 0) for im in cvimages]
     if feature_type == 2:
         print('HOG')
         # Extract the Hough forest features. If `full` is set, uses the
         # 32 feature channels used by Juergen Gall in his original publications,
         # else use 15 feature channels as used by Matthias Dantone.
         # The image must be in OpenCV (BGR) channel format!
-        feat_images = [soil.extract_hough_forest_features(im, full=(n_feature_channels == 32)) for im in cvimages]
+        feat_images = [soil.extract_hough_forest_features(
+            im, full=(n_feature_channels == 32)) for im in cvimages]
         # print("shape", feat_images[0].shape)
         # for i in range(15):
         #    plt.imshow(feat_images[0][i,:,:])
@@ -265,12 +250,11 @@ def trainHoughForests():
     # feat_name = 'feat_images.pkl'
     with open(root_dir + '' + feat_name, 'wb') as f:
         pickle.dump(feat_images, f)
-    
-    
+
     # %% Forest construction.
     # Xây dựng Forest
     random_init = 1
-    trees = [] # danh sách cây
+    trees = []  # danh sách cây
     for tree_idx in range(n_trees):
         print('Constructing and training tree %d.' % (tree_idx))
         random_seed = tree_idx * 2 + 1 + random_init * n_trees
