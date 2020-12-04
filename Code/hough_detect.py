@@ -3,7 +3,6 @@ from numpy.core.records import array
 from scipy.stats.stats import PearsonRConstantInputWarning
 from sklearn import preprocessing
 import fertilized
-
 from PIL import Image, ImageDraw
 from matplotlib.pyplot import sca
 import skimage.color
@@ -32,6 +31,7 @@ import ast
 import statistics
 import shutil
 import time
+from skimage.transform import resize
 
 from hough_preferences import scales, ratios, root_dir, test_image_dir, test_annot_dir, min_prob_threshold, n_feature_channels, \
     patch_size, application_step_size, use_reduced_grid, forest_name, n_detec, clear_area, \
@@ -125,7 +125,7 @@ def init():
     # test_annot_dir = 'test_boundingboxes'
     image_path = os.path.join(root_dir, test_image_dir, '*'+extension)
     annot_path = os.path.join(root_dir, test_annot_dir, "via_region_data.csv")
-    
+
     # Duyệt tất cả các file trong thư mục test_images
     for filename in glob.glob(image_path):
         # Chỉ trích xuất ra tên ảnh (Không trích xuất các thư mục cha)
@@ -165,15 +165,17 @@ def detection(im, forest, soil, box_height, box_width):
     bbs = []
     # Get vote array
     # scales = (0.75, 1.0)
-    vprobmap = np.ones((im.shape[0], im.shape[1], im.shape[2], len(scales))) # shape = (530, 500, 3, 2)
+    # shape = (530, 500, 3, 2)
+    vprobmap = np.ones((im.shape[0], im.shape[1], len(scales)))
     # init_start_time = time.time()
     # Duyệt từng scale được cài đặt
     for idx, scale in enumerate(scales):
         # scaled_image = np.ascontiguousarray((rescale(im, scale) * 255.).astype('uint8'))
-        new_height, new_width = int(im.shape[0] * scale), int(im.shape[1] * scale)
-        b = im[:,:,0]
-        g = im[:,:,1]
-        r = im[:,:,2]
+        new_height, new_width = int(
+            im.shape[0] * scale), int(im.shape[1] * scale)
+        b = im[:, :, 0]
+        g = im[:, :, 1]
+        r = im[:, :, 2]
         scaled_b = cv2.resize(src=b, dsize=(new_height, new_width))
         scaled_g = cv2.resize(src=g, dsize=(new_height, new_width))
         scaled_r = cv2.resize(src=r, dsize=(new_height, new_width))
@@ -181,10 +183,12 @@ def detection(im, forest, soil, box_height, box_width):
 
         # shape = (3, 375, 397)
         scaled_image = np.transpose(scaled_image, (2, 1, 0))
+        # Chuyển về (397, 375, 3)
 
         # Chuyển về định dạng tương thích để trích xuất đặc trưng
         if scaled_image.ndim == 2:
-            scaled_image = np.ascontiguousarray(skimage.color.gray2rgb(scaled_image))
+            scaled_image = np.ascontiguousarray(
+                skimage.color.gray2rgb(scaled_image))
         else:
             scaled_image = np.ascontiguousarray(scaled_image[:, :, :3])
 
@@ -200,11 +204,13 @@ def detection(im, forest, soil, box_height, box_width):
                 feat_image = None
                 if feature_type == 1:
                     # Trích xuất đặc trưng RGB
-                    feat_image = np.repeat(np.ascontiguousarray(np.rollaxis(scaled_image, 2, 0).astype(np.uint8))[:3, :, :], 5, 0)
+                    feat_image = np.repeat(np.ascontiguousarray(np.rollaxis(
+                        scaled_image, 2, 0).astype(np.uint8))[:3, :, :], 5, 0)
 
                 if feature_type == 2:
                     # Trích xuất đặc trưng bằng hough forest
-                    feat_image = soil.extract_hough_forest_features(scaled_image, (n_feature_channels == 32))
+                    feat_image = soil.extract_hough_forest_features(
+                        scaled_image, (n_feature_channels == 32))
 
 #                if feature_type == 3:
 #                    max_abs_scaler = preprocessing.MaxAbsScaler()
@@ -224,20 +230,25 @@ def detection(im, forest, soil, box_height, box_width):
                                                use_reduced_grid,
                                                ratio,
                                                min_prob_threshold)
-                
-                
-                probmap = scipy.misc.imresize(probmap, im.shape, mode='F')
+
+                # probmap = scipy.misc.imresize(probmap, im.shape, mode='F')
+                # Đưa ảnh map xác suất về kích cỡ ban đầu của ảnh
+                # probmap = (530, 500)
+                probmap = resize(probmap, output_shape=(im.shape[0], im.shape[1]))
+                # Lọc gaussian
                 probmap = scipy.ndimage.gaussian_filter(probmap, sigma=2)
+                # Lưu ma trận xác suất lại
+                # vprobmap shape = (530, 500, 2)
                 vprobmap[:, :, idx] = probmap
 
     # print("--- %s seconds for diff scale pred ---" % (time.time() - init_start_time))
+
+    # Detect n_dectec đối tượng
     for bbidx in range(n_detec):
         max_score = vprobmap.max()
         # if  max_score > 0.12:
-        max_loc = np.array(np.unravel_index(
-            np.argmax(vprobmap), vprobmap.shape)[:2])
-        max_sidx = np.array(np.unravel_index(
-            np.argmax(vprobmap), vprobmap.shape)[2])
+        max_loc = np.array(np.unravel_index(np.argmax(vprobmap), vprobmap.shape)[:2])
+        max_sidx = np.array(np.unravel_index(np.argmax(vprobmap), vprobmap.shape)[2])
         max_ratio = 1  # TODO: works only for aspect ratio=1
         # print('bbidx: {} max_score:{}'.format(bbidx, max_score))
         # calculate the bounding box
@@ -245,10 +256,8 @@ def detection(im, forest, soil, box_height, box_width):
         print(box_width, scale)
         bbw = box_width / scales[max_sidx]
         bbh = box_height / scales[max_sidx]
-        bb.luc = np.array([max_loc[1] - max_ratio * 0.5 *
-                           bbw, max_loc[0] - 0.5 * bbh])
-        bb.rlc = np.array([max_loc[1] + max_ratio * 0.5 *
-                           bbw, max_loc[0] + 0.5 * bbh])
+        bb.luc = np.array([max_loc[1] - max_ratio * 0.5 *bbw, max_loc[0] - 0.5 * bbh])
+        bb.rlc = np.array([max_loc[1] + max_ratio * 0.5 *bbw, max_loc[0] + 0.5 * bbh])
         bb.score = max_score
         bbs.append(bb)
         # non maximal suppression
@@ -263,9 +272,9 @@ def detection(im, forest, soil, box_height, box_width):
 def getThreshold(epoch):
     getThreshold_start_time = time.time()
     # im_scores = []
-    tp_scores = [] # true postive
-    fp_scores = [] # false positive
-    bbsDict = {} # bounding box dict
+    tp_scores = []  # true postive
+    fp_scores = []  # false positive
+    bbsDict = {}  # bounding box dict
     # forest và soil là của thư viện
     # box_height là median height của các box đã được gán
     # box_width là median width của các box đã được gán
@@ -299,8 +308,7 @@ def getThreshold(epoch):
                 fp_scores.append(bb.score)
     # Find new opt thresold
     #print("length of tp and fp scores, len of all bbs",len(tp_scores),len(tp_scores),len(bbsDict))
-    p_pos = float(len(tp_scores)) / \
-        (float((len(tp_scores)) + float(len(fp_scores)))+eps)
+    p_pos = float(len(tp_scores)) / (float((len(tp_scores)) + float(len(fp_scores)))+eps)
     p_neg = 1 - p_pos
     if p_pos == 0:
         p_pos = eps
@@ -387,7 +395,8 @@ def getThreshold(epoch):
     print()
     # shutil.copy(src_image_path, dst_image_path)
     # os.remove(src_image_path)
-    print("--- %s seconds for getThreshold ---" % (time.time() - getThreshold_start_time))
+    print("--- %s seconds for getThreshold ---" %
+          (time.time() - getThreshold_start_time))
     return opt_tao, max_annot_cost, src_image_path
 
 
@@ -399,6 +408,7 @@ def detect(epoch):
 # while (epoch == 0):
 #      detect(epoch)
 #      epoch = epoch + 1
+
 
 if __name__ == '__main__':
     opt_tao, max_annot_cost, src_image_path = getThreshold(0)
