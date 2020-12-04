@@ -1,6 +1,6 @@
-#!/usr/bin/env python
-# %% Imports
 from __future__ import print_function
+from numpy.core.records import array
+from scipy.stats.stats import PearsonRConstantInputWarning
 from sklearn import preprocessing
 import fertilized
 
@@ -37,6 +37,7 @@ from hough_preferences import scales, ratios, root_dir, test_image_dir, test_ann
     patch_size, application_step_size, use_reduced_grid, forest_name, n_detec, clear_area, \
     num_samples, eps, interactive, fertilized_sys_path, extension, feature_type
 
+import cv2
 sys.path.insert(0, fertilized_sys_path)
 #sys.path.insert(0, deep_features_path)
 #import vgg_19_conv_feat
@@ -110,6 +111,7 @@ def calculateGammaParam(tp_na, fp_na):
 
 
 def init():
+    """ Hàm khởi tạo """
     init_start_time = time.time()
     widths = []
     heights = []
@@ -118,11 +120,15 @@ def init():
     with open(root_dir+''+forest_name, 'rb') as df:
         forest = pickle.load(df)
     soil = fertilized.Soil()
+    # root_dir = './leaf/'
+    # test_image_dir = 'test_images'
+    # test_annot_dir = 'test_boundingboxes'
     image_path = os.path.join(root_dir, test_image_dir, '*'+extension)
     annot_path = os.path.join(root_dir, test_annot_dir, "via_region_data.csv")
-    # print(image_path)
-    # print(annot_path)
+    
+    # Duyệt tất cả các file trong thư mục test_images
     for filename in glob.glob(image_path):
+        # Chỉ trích xuất ra tên ảnh (Không trích xuất các thư mục cha)
         img_name = filename.replace(root_dir + '' + test_image_dir + '/', "")
         images[img_name] = np.array(Image.open(filename))
         assert not images[img_name] is None
@@ -140,40 +146,65 @@ def init():
             if (w != None and h != None):
                 widths.append(w)
                 heights.append(h)
+    # Lấy box_width và box_height là median của các box
     box_width = statistics.median(widths)
     box_height = statistics.median(heights)
-    # print('wh',box_width,box_height)
-    # print("--- %s seconds for init ---" % (time.time() - init_start_time))
+    print("--- %s seconds for init ---" % (time.time() - init_start_time))
     return forest, soil, box_height, box_width, images
 
 
 def detection(im, forest, soil, box_height, box_width):
+    """ Thực hiện detection với mỗi ảnh """
+    # chuyển đổi ảnh về định dạng BGR theo oepncv để tương thích với thư viện
+    if im.ndim == 2:
+        im = np.ascontiguousarray(skimage.color.gray2rgb(im))
+    else:
+        im = np.ascontiguousarray(im[:, :, :3])
+    # Shape = (530, 500, 3)
     # Detections
     bbs = []
     # Get vote array
-    vprobmap = np.ones((im.shape[0], im.shape[1], len(scales)))
-    init_start_time = time.time()
+    # scales = (0.75, 1.0)
+    vprobmap = np.ones((im.shape[0], im.shape[1], im.shape[2], len(scales))) # shape = (530, 500, 3, 2)
+    # init_start_time = time.time()
+    # Duyệt từng scale được cài đặt
     for idx, scale in enumerate(scales):
-        scaled_image = np.ascontiguousarray(
-            (rescale(im, scale) * 255.).astype('uint8'))
-        print("TEST FUNCTION")
-        print("SCALE IMAGE", scaled_image.shape)
-        scaled_image = np.transpose(scaled_image, (2, 0, 1))
-        print("SCALE IMAGE AFTER RESHAPE:", scaled_image.shape)
+        # scaled_image = np.ascontiguousarray((rescale(im, scale) * 255.).astype('uint8'))
+        new_height, new_width = int(im.shape[0] * scale), int(im.shape[1] * scale)
+        b = im[:,:,0]
+        g = im[:,:,1]
+        r = im[:,:,2]
+        scaled_b = cv2.resize(src=b, dsize=(new_height, new_width))
+        scaled_g = cv2.resize(src=g, dsize=(new_height, new_width))
+        scaled_r = cv2.resize(src=r, dsize=(new_height, new_width))
+        scaled_image = np.array([scaled_b, scaled_g, scaled_r])
+
+        # shape = (3, 375, 397)
+        scaled_image = np.transpose(scaled_image, (2, 1, 0))
+
+        # Chuyển về định dạng tương thích để trích xuất đặc trưng
+        if scaled_image.ndim == 2:
+            scaled_image = np.ascontiguousarray(skimage.color.gray2rgb(scaled_image))
+        else:
+            scaled_image = np.ascontiguousarray(scaled_image[:, :, :3])
+
+        # Nếu kích cỡ ảnh sau khi scale mà nhỏ hơn kích cỡ patch thì bỏ qua
         if (scaled_image.shape[0] < patch_size[0] or scaled_image.shape[1] < patch_size[1]):
             print(scaled_image.shape, patch_size)
             print("the test scaled image is smaller than patch size")
             continue
         else:
+            # Ngược lại thì thực hiện thuật toán
+            # Duyệt từng scale (tỷ lệ) của ratios (tỷ lệ cho mỗi ảnh)
             for ratio in ratios:
+                feat_image = None
                 if feature_type == 1:
-                    feat_image = np.repeat(np.ascontiguousarray(np.rollaxis(
-                        scaled_image, 2, 0).astype(np.uint8))[:3, :, :], 5, 0)
-                    # feat_image = np.repeat(soil.extract_hough_forest_features(scaled_image, (n_feature_channels == 32))[:3, :, :], 5, 1)
+                    # Trích xuất đặc trưng RGB
+                    feat_image = np.repeat(np.ascontiguousarray(np.rollaxis(scaled_image, 2, 0).astype(np.uint8))[:3, :, :], 5, 0)
 
                 if feature_type == 2:
-                    feat_image = soil.extract_hough_forest_features(
-                        scaled_image, (n_feature_channels == 32))
+                    # Trích xuất đặc trưng bằng hough forest
+                    feat_image = soil.extract_hough_forest_features(scaled_image, (n_feature_channels == 32))
 
 #                if feature_type == 3:
 #                    max_abs_scaler = preprocessing.MaxAbsScaler()
@@ -185,12 +216,16 @@ def detection(im, forest, soil, box_height, box_width):
 #                        feat_dim[ch, :, :] = scaled_feat
 #                    feat_image = np.ascontiguousarray(feat_dim[:15, :, :].astype(np.uint8))
 
+                # feat_image shape = (15, 397, 375)
+                # Đưa đặc trưng vào và tạo ra ma trận xác suất
+                # probmap = (397, 375)
                 probmap = forest.predict_image(feat_image,
                                                application_step_size,
                                                use_reduced_grid,
                                                ratio,
                                                min_prob_threshold)
-                # print('idx: {} max_score:{}'.format(idx, probmap.max()))
+                
+                
                 probmap = scipy.misc.imresize(probmap, im.shape, mode='F')
                 probmap = scipy.ndimage.gaussian_filter(probmap, sigma=2)
                 vprobmap[:, :, idx] = probmap
@@ -228,17 +263,20 @@ def detection(im, forest, soil, box_height, box_width):
 def getThreshold(epoch):
     getThreshold_start_time = time.time()
     # im_scores = []
-    tp_scores = []
-    fp_scores = []
-    bbsDict = {}
-
+    tp_scores = [] # true postive
+    fp_scores = [] # false positive
+    bbsDict = {} # bounding box dict
+    # forest và soil là của thư viện
+    # box_height là median height của các box đã được gán
+    # box_width là median width của các box đã được gán
+    # images là dictionary {"tên ảnh": ma trận ảnh}
     forest, soil, box_height, box_width, images = init()
     detection_start_time = time.time()
     for name, im in images.items():
-        # print(name)
+        # print("IMAGE:", name, im.shape) # Vẫn đúng
         bbs = detection(im, forest, soil, box_height, box_width)
         bbsDict[name] = bbs
-    # ("--- %s seconds for detection ---" % (time.time() - detection_start_time))
+    ("--- %s seconds for detection ---" % (time.time() - detection_start_time))
     # print("len bbs", len(bbsDict))
     scores = []
     # first epoch opt thresh is median of the scores
@@ -349,7 +387,7 @@ def getThreshold(epoch):
     print()
     # shutil.copy(src_image_path, dst_image_path)
     # os.remove(src_image_path)
-    # print("--- %s seconds for getThreshold ---" % (time.time() - getThreshold_start_time))
+    print("--- %s seconds for getThreshold ---" % (time.time() - getThreshold_start_time))
     return opt_tao, max_annot_cost, src_image_path
 
 
@@ -361,3 +399,7 @@ def detect(epoch):
 # while (epoch == 0):
 #      detect(epoch)
 #      epoch = epoch + 1
+
+if __name__ == '__main__':
+    opt_tao, max_annot_cost, src_image_path = getThreshold(0)
+    print(opt_tao, max_annot_cost, src_image_path)
