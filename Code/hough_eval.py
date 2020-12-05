@@ -36,7 +36,8 @@ import ast
 import statistics
 import time
 import csv
-
+import cv2
+from skimage.transform import resize
 
 sys.path.insert(0, fertilized_sys_path)
 # sys.path.insert(0, deep_features_path)
@@ -135,17 +136,34 @@ def evaluate(name, im, neg_image_store_flag, forest, soil, box_height, box_width
     vprobmap = np.ones((im.shape[0], im.shape[1], len(scales)))
 
     for idx, scale in enumerate(scales):
-        scaled_image = np.ascontiguousarray(
-            (rescale(im, scale) * 255.).astype('uint8'))
-        print("SCALE IMAGE", scaled_image.shape)
-        scaled_image = np.transpose(scaled_image, (2, 0, 1))
-        print("SCALE IMAGE AFTER RESHAPE:", scaled_image.shape)
+        # scaled_image = np.ascontiguousarray((rescale(im, scale) * 255.).astype('uint8'))
+        
+        new_height, new_width = int(
+            im.shape[0] * scale), int(im.shape[1] * scale)
+        b = im[:, :, 0]
+        g = im[:, :, 1]
+        r = im[:, :, 2]
+        scaled_b = cv2.resize(src=b, dsize=(new_height, new_width))
+        scaled_g = cv2.resize(src=g, dsize=(new_height, new_width))
+        scaled_r = cv2.resize(src=r, dsize=(new_height, new_width))
+        scaled_image = np.array([scaled_b, scaled_g, scaled_r])
+        scaled_image = np.transpose(scaled_image, (2, 1, 0))
+        # Chuyển về định dạng tương thích để trích xuất đặc trưng
+        if scaled_image.ndim == 2:
+            scaled_image = np.ascontiguousarray(
+                skimage.color.gray2rgb(scaled_image))
+        else:
+            scaled_image = np.ascontiguousarray(scaled_image[:, :, :3])
+        # print("SCALE IMAGE", scaled_image.shape)
+        # scaled_image = np.transpose(scaled_image, (2, 0, 1))
+        # print("SCALE IMAGE AFTER RESHAPE:", scaled_image.shape)
         if(scaled_image.shape[0] < patch_size[0] or scaled_image.shape[1] < patch_size[1]):
             # print(scaled_image.shape,patch_size)
             # print("the test scaled image is smaller than patch size")
             continue
         else:
             for ratio in ratios:
+                feat_image = None
                 if feature_type == 1:
                     feat_image = np.repeat(np.ascontiguousarray(np.rollaxis(
                         scaled_image, 2, 0).astype(np.uint8))[:3, :, :], 5, 0)
@@ -171,7 +189,8 @@ def evaluate(name, im, neg_image_store_flag, forest, soil, box_height, box_width
                                                ratio,
                                                min_prob_threshold)
                 # print('idx: {} max_score:{}'.format(idx, probmap.max()))
-                probmap = scipy.misc.imresize(probmap, im.shape, mode='F')
+                # probmap = scipy.misc.imresize(probmap, im.shape, mode='F')
+                probmap = resize(probmap, output_shape=(im.shape[0], im.shape[1]))
                 probmap = scipy.ndimage.gaussian_filter(probmap, sigma=2)
                 vprobmap[:, :, idx] = probmap
 

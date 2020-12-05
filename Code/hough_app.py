@@ -78,22 +78,24 @@ def train():
     csvfile.close()
 
     hough_train.train()
-    mAP.append(hough_eval.runEvaluate())
+    # mAP.append(hough_eval.runEvaluate()) # Đang fix
     epoch = epoch + 1
     return ('', 204)
 
 
 @app.route("/test", methods=['GET'])
 def test():
+    print("===== TEST FUNCTION =====")
     global epoch
     #    code to active learning, returns name of image with highest annotation cost
     opt_tao, max_annot_cost, annot_file_name = hough_detect.detect(epoch)
     # epoch = epoch+1
-    print("filename", annot_file_name)
-    filename = annot_file_name.split('/')[9]
-
+    # annot_file_name = './leaf/test_images/plant062_rgb.png'
+    # app.config['UPLOAD_FOLDER'] = 'static/dataset'
+    # filename = 'plant062_rgb.png'
+    # full_filename = 'static/dataset/plant062_rgb.png'
+    filename = annot_file_name.split('/')[-1]
     full_filename = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    print("filename", full_filename)
     full_filename = [full_filename]
     #    urllib.request.urlretrieve("http://127.0.0.1:5000/3240f7fe-dd7f-46e1-9179-d63d373f002e")
     return jsonify({'full_filename': full_filename})

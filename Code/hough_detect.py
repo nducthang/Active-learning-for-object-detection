@@ -35,13 +35,12 @@ from skimage.transform import resize
 
 from hough_preferences import scales, ratios, root_dir, test_image_dir, test_annot_dir, min_prob_threshold, n_feature_channels, \
     patch_size, application_step_size, use_reduced_grid, forest_name, n_detec, clear_area, \
-    num_samples, eps, interactive, fertilized_sys_path, extension, feature_type
+    num_samples, eps, interactive, fertilized_sys_path, extension, feature_type, train_image_dir
 
 import cv2
 sys.path.insert(0, fertilized_sys_path)
 #sys.path.insert(0, deep_features_path)
 #import vgg_19_conv_feat
-# BB class
 
 
 class BB():
@@ -71,7 +70,7 @@ def plotDetections(luc, rlc, img, c):
 
 
 def calculateGammaParam(tp_na, fp_na):
-    calculateGammaParam_start_time = time.time()
+    # calculateGammaParam_start_time = time.time()
     print('num tps', len(tp_na), 'num fps', len(fp_na))
     if len(tp_na) == 0:
         max_tp = 0
@@ -234,7 +233,8 @@ def detection(im, forest, soil, box_height, box_width):
                 # probmap = scipy.misc.imresize(probmap, im.shape, mode='F')
                 # Đưa ảnh map xác suất về kích cỡ ban đầu của ảnh
                 # probmap = (530, 500)
-                probmap = resize(probmap, output_shape=(im.shape[0], im.shape[1]))
+                probmap = resize(probmap, output_shape=(
+                    im.shape[0], im.shape[1]))
                 # Lọc gaussian
                 probmap = scipy.ndimage.gaussian_filter(probmap, sigma=2)
                 # Lưu ma trận xác suất lại
@@ -246,25 +246,38 @@ def detection(im, forest, soil, box_height, box_width):
     # Detect n_dectec đối tượng
     for bbidx in range(n_detec):
         max_score = vprobmap.max()
-        # if  max_score > 0.12:
-        max_loc = np.array(np.unravel_index(np.argmax(vprobmap), vprobmap.shape)[:2])
-        max_sidx = np.array(np.unravel_index(np.argmax(vprobmap), vprobmap.shape)[2])
+        # Chuyển đổi chỉ số mảng 1D tương ứng vể chỉ số 2D
+        # Ví dụ 6 trong 1D tương ứng với vị trí (1,2) trong mảng 2D chiều 3x4
+        # np.argmax trả về index 1D mà tại đó value lớn nhất
+        # return [235, 172, 0]
+        max_loc = np.array(np.unravel_index(
+            np.argmax(vprobmap), vprobmap.shape)[:2])  # [235, 172]
+        # Lấy thông tin scale mà tại đó thu được xác suất lớn nhất
+        max_sidx = np.array(np.unravel_index(
+            np.argmax(vprobmap), vprobmap.shape)[2])  # [0]
         max_ratio = 1  # TODO: works only for aspect ratio=1
-        # print('bbidx: {} max_score:{}'.format(bbidx, max_score))
+
         # calculate the bounding box
         bb = BB()
-        print(box_width, scale)
-        bbw = box_width / scales[max_sidx]
+        # Tính toán chiều rộng và chiều cao cho bouding box
+        bbw = box_width / scales[max_sidx]  # scales = (0.75 1.0)
         bbh = box_height / scales[max_sidx]
-        bb.luc = np.array([max_loc[1] - max_ratio * 0.5 *bbw, max_loc[0] - 0.5 * bbh])
-        bb.rlc = np.array([max_loc[1] + max_ratio * 0.5 *bbw, max_loc[0] + 0.5 * bbh])
+        # Lấy ra tọa độ góc trái và góc phải của box
+        bb.luc = np.array([max_loc[1] - max_ratio * 0.5 *
+                           bbw, max_loc[0] - 0.5 * bbh])
+        bb.rlc = np.array([max_loc[1] + max_ratio * 0.5 *
+                           bbw, max_loc[0] + 0.5 * bbh])
         bb.score = max_score
         bbs.append(bb)
+
         # non maximal suppression
+        # clear_area = 200
+        # Đưa các pixel xung quanh về 0 để lần chọn sau không chọn box chồng lấn lại
         vprobmap[max(0, int(max_loc[0]) - int(clear_area / 2)):int(max_loc[0]) + int(clear_area / 2),
                  max(0, int(max_loc[1]) - int(clear_area / 2)):int(max_loc[1]) + int(clear_area / 2), :] = 0
+
     # print('im_scores',im_scores)
-    print(bbs)
+    # print(bbs)
     return bbs
 
 
@@ -282,7 +295,6 @@ def getThreshold(epoch):
     forest, soil, box_height, box_width, images = init()
     detection_start_time = time.time()
     for name, im in images.items():
-        # print("IMAGE:", name, im.shape) # Vẫn đúng
         bbs = detection(im, forest, soil, box_height, box_width)
         bbsDict[name] = bbs
     ("--- %s seconds for detection ---" % (time.time() - detection_start_time))
@@ -293,11 +305,13 @@ def getThreshold(epoch):
         for name, bbs in bbsDict.items():
             for bb in bbs:
                 scores.append(bb.score)
+        # Lấy median các score và lưu lại tại epoch 0
         opt_tao = statistics.median(scores)
         np.save("opt_thresh_obj.npy", opt_tao)
     else:
+        # với các epoch khác thì sẽ load score
         opt_tao = np.load("opt_thresh_obj.npy")
-    # print("opt tao",opt_tao)
+
     # divide detections based on old opt threshold
     for name, bbs in bbsDict.items():
         for bb in bbs:
@@ -306,20 +320,27 @@ def getThreshold(epoch):
                 tp_scores.append(bb.score)
             else:
                 fp_scores.append(bb.score)
+
     # Find new opt thresold
     #print("length of tp and fp scores, len of all bbs",len(tp_scores),len(tp_scores),len(bbsDict))
-    p_pos = float(len(tp_scores)) / (float((len(tp_scores)) + float(len(fp_scores)))+eps)
+    p_pos = float(len(tp_scores)) / \
+        (float((len(tp_scores)) + float(len(fp_scores)))+eps)
     p_neg = 1 - p_pos
     if p_pos == 0:
         p_pos = eps
     if p_neg == 0:
         p_neg = eps
+
     print("p_neg", p_neg, "p_pos", p_pos)
     tp_shape, tp_loc, tp_scale, fp_shape, fp_loc, fp_scale = calculateGammaParam(
         tp_scores, fp_scores)
+
+    # Hiển thị đồ thị nếu interative = True
     if interactive:
         plt.show()
-    #print("parametes",tp_shape, tp_loc, tp_scale, fp_shape, fp_loc, fp_scale)
+
+    print("parametes", tp_shape, tp_loc, tp_scale, fp_shape, fp_loc, fp_scale)
+
     # Here S is list of all scores
     S = tp_scores + fp_scores
     min_cost = eps
@@ -334,10 +355,11 @@ def getThreshold(epoch):
             opt_tao = t
             min_cost = cost
     np.save("opt_thresh_obj.npy", opt_tao)
-    # print("OPT_TAO",opt_tao)
+
     opt_tao = np.load("opt_thresh_obj.npy")
     tp_cdf = (gamma.cdf((opt_tao), tp_shape, tp_loc, tp_scale))
     fn_cdf = (1 - gamma.cdf((opt_tao), fp_shape, fp_loc, fp_scale))
+
     max_annot_cost = 0
     max_annot_cost_img_name = ''
     for name, bbs in bbsDict.items():
@@ -351,30 +373,26 @@ def getThreshold(epoch):
                 gamma.cdf(s - eps, tp_shape, loc=tp_loc, scale=tp_scale)
             p_s_neg_s = gamma.cdf(s + eps, fp_shape, loc=fp_loc, scale=fp_scale) - \
                 gamma.cdf(s - eps, fp_shape, loc=fp_loc, scale=fp_scale)
-            # print("p_s_pos_s",p_s_pos_s,"p_s_neg_s",p_s_neg_s)
-            # print("s,fp_shape,fp_loc, fp_scale",s,fp_shape,fp_loc, fp_scale)
-            # print("p_s_neg_s,s,fp_shape,fp_loc, fp_scale",p_s_neg_s,s,fp_shape,fp_loc, fp_scale)
+
             if s >= opt_tao:
                 p_s_fp_tao = float(p_s_neg_s * p_neg) / float(tp_cdf + eps)
                 p_s_fn_tao = 0
             else:
                 p_s_fp_tao = 0
                 p_s_fn_tao = float(p_s_pos_s * p_pos) / float(fn_cdf + eps)
-            #print("p_s_fp_tao",p_s_fp_tao ,"p_s_fn_tao",p_s_fn_tao)
+
             p_fp_s_tao = float(p_s_fp_tao * tp_cdf) / \
                 float((p_s_neg_s * p_neg) + (p_s_pos_s * p_pos) + eps)
             p_fn_s_tao = float(p_s_fn_tao * fn_cdf) / \
                 float((p_s_neg_s * p_neg) + (p_s_pos_s * p_pos) + eps)
-            #print("fp s tao ",p_fp_s_tao ,"fn s tao ", p_fn_s_tao)
+
             annot_cost += (p_fp_s_tao + p_fn_s_tao)
-            # print(annot_cost,)
-        # print('annot_cost',annot_cost)
+
         if annot_cost >= max_annot_cost:
             max_annot_cost = annot_cost
-            # print("max_annot_cost",max_annot_cost)
-            # print(name)
             max_annot_cost_img_name = name
 
+    # Lấy đường dẫn hình ành đáng test
     src_image_path = os.path.join(
         root_dir, test_image_dir, max_annot_cost_img_name)
     print(os.path.join(root_dir, test_image_dir, max_annot_cost_img_name))
@@ -383,18 +401,25 @@ def getThreshold(epoch):
     # print("TEST test_image_dir:", test_image_dir)
     # print("TEST max_annot_cost_img_name:", max_annot_cost_img_name)
 
-    # copied_img = Image.open(os.path.join(root_dir, test_image_dir, max_annot_cost_img_name))
+    copied_img = Image.open(os.path.join(
+        root_dir, test_image_dir, max_annot_cost_img_name))
 
-    # if(interactive):
-    #     plt.title('Image with high annotation cost')
-    #     plt.imshow(copied_img)
-    #     plt.show('Image with high annotation cost')
-    # dst_image_path = os.path.join(root_dir, train_image_dir, max_annot_cost_img_name[:-4] + '_pos'+extension)
+    if(interactive):
+        plt.title('Image with high annotation cost')
+        plt.imshow(copied_img)
+        # plt.show('Image with high annotation cost')
+        plt.show()
 
-    # print('max annot cost', max_annot_cost, 'image name', max_annot_cost_img_name)
+    dst_image_path = os.path.join(
+        root_dir, train_image_dir, max_annot_cost_img_name[:-4] + '_pos'+extension)
+
+    print('max annot cost', max_annot_cost,
+          'image name', max_annot_cost_img_name)
     print()
-    # shutil.copy(src_image_path, dst_image_path)
-    # os.remove(src_image_path)
+    # copy ảnh ở thư mục test vào thư mục train
+    shutil.copy(src_image_path, dst_image_path)
+    # Xóa ảnh ở thư mục test đi
+    os.remove(src_image_path)
     print("--- %s seconds for getThreshold ---" %
           (time.time() - getThreshold_start_time))
     return opt_tao, max_annot_cost, src_image_path
