@@ -38,6 +38,7 @@ from hough_preferences import scales, ratios, root_dir, test_image_dir, test_ann
     num_samples, eps, interactive, fertilized_sys_path, extension, feature_type, train_image_dir
 
 import cv2
+import matplotlib.patches as patches
 sys.path.insert(0, fertilized_sys_path)
 #sys.path.insert(0, deep_features_path)
 #import vgg_19_conv_feat
@@ -57,14 +58,16 @@ def plotgammaPDF(ax, data, pdf_gamma, label, clr):
     ax.set_xlabel('Detection score ', size=15)
     ax.legend(loc='best', frameon=False)
 
-
-def plotDetections(luc, rlc, img, c):
-    draw = ImageDraw.Draw(img)
-    draw.line(((luc[0], luc[1]), (rlc[0], luc[1])), fill=c, width=int(7))
-    draw.line(((rlc[0], luc[1]), (rlc[0], rlc[1])), fill=c, width=int(7))
-    draw.line(((rlc[0], rlc[1]), (luc[0], rlc[1])), fill=c, width=int(7))
-    draw.line(((luc[0], rlc[1]), (luc[0], luc[1])), fill=c, width=int(7))
-    plt.imshow(img)
+count_image = 0
+def plotBoundingBox(im, bbs):
+    global count_image
+    fig, ax = plt.subplots(1)
+    ax.imshow(im)
+    for bb in bbs:
+        rect = patches.Rectangle((bb.luc[0], bb.luc[1]), bb.rlc[0]-bb.luc[0], bb.rlc[1]-bb.luc[1], linewidth=1, edgecolor='r', facecolor='none')
+        ax.add_patch(rect)
+    plt.savefig(str(count_image)+'.png')
+    count_image += 1
 
 # Calculate parameters of gamma distribution
 
@@ -297,6 +300,8 @@ def getThreshold(epoch):
     for name, im in images.items():
         bbs = detection(im, forest, soil, box_height, box_width)
         bbsDict[name] = bbs
+        plotBoundingBox(im, bbs) # Thử vẽ các bounding box
+
     ("--- %s seconds for detection ---" % (time.time() - detection_start_time))
     # print("len bbs", len(bbsDict))
     scores = []
@@ -396,10 +401,6 @@ def getThreshold(epoch):
     src_image_path = os.path.join(
         root_dir, test_image_dir, max_annot_cost_img_name)
     print(os.path.join(root_dir, test_image_dir, max_annot_cost_img_name))
-
-    # print("TEST root_dir:", root_dir)
-    # print("TEST test_image_dir:", test_image_dir)
-    # print("TEST max_annot_cost_img_name:", max_annot_cost_img_name)
 
     copied_img = Image.open(os.path.join(
         root_dir, test_image_dir, max_annot_cost_img_name))
