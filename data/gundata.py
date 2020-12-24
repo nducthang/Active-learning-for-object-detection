@@ -5,7 +5,7 @@ import numpy as np
 
 files = []
 for ext in ["*.png", "*.jpeg", "*.jpg"]:
-    image_files = glob.glob(os.path.join("/media/thang/New Volume/Active-learning/yolov5/data/gun/", ext))
+    image_files = glob.glob(os.path.join("/media/thang/New Volume/Active-learning-for-object-detection/data/gun/", ext))
     files += image_files
 
 nb_val = math.floor(len(files)*0.2)

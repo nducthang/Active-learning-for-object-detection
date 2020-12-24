@@ -1,5 +1,5 @@
-train: /media/thang/New Volume/Active-learning/yolov5/data/train.txt  # 128 images
-val: /media/thang/New Volume/Active-learning/yolov5/data/val.txt  # 128 images
+train: /media/thang/New Volume/Active-learning-for-object-detection/data/train.txt
+val: /media/thang/New Volume/Active-learning-for-object-detection/data/val.txt
 
 # number of classes
 nc: 1

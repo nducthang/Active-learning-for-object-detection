@@ -1,5 +1,5 @@
 {
     "python.pythonPath": "/home/thang/env/bin/python3",
-    "jupyter.jupyterServerType": "remote",
+    "jupyter.jupyterServerType": "local",
     "cmake.sourceDirectory": "${workspaceFolder}/fertilized-forests"
 }

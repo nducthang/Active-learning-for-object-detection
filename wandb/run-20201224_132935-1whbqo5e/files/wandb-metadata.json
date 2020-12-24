@@ -1,0 +1,43 @@
+{
+    "os": "Linux-5.4.0-58-generic-x86_64-with-Ubuntu-18.04-bionic",
+    "python": "3.6.9",
+    "heartbeatAt": "2020-12-24T06:29:37.863208",
+    "startedAt": "2020-12-24T06:29:35.027555",
+    "docker": null,
+    "gpu": "GeForce GTX 1050",
+    "gpu_count": 1,
+    "cpu_count": 8,
+    "cuda": "10.1.243",
+    "args": [
+        "--img",
+        "640",
+        "--batch",
+        "8",
+        "--epochs",
+        "10",
+        "--data",
+        "./data/gun.yaml",
+        "--cfg",
+        "./models/yolo_gun.yaml",
+        "--weight",
+        "yolov5s.pt",
+        "--name",
+        "detect_gun",
+        "--nosave",
+        "--cache",
+        "--device",
+        "0"
+    ],
+    "state": "running",
+    "codePath": "train.py",
+    "program": "train.py",
+    "git": {
+        "remote": "https://github.com/nducthang/Active-learning.git",
+        "commit": "ff14b3003c4b285f3a25f7560ebbf7e327cf259f"
+    },
+    "email": "nguyenducthang8a2@gmail.com",
+    "root": "/media/thang/New Volume/Active-learning-for-object-detection",
+    "host": "thang-GV62-7RD",
+    "username": "thang",
+    "executable": "/home/thang/env/bin/python3"
+}
