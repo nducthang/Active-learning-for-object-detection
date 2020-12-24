@@ -16,6 +16,7 @@ from torch.utils.tensorboard import SummaryWriter
 from utils.general import increment_path, fitness, get_latest_run, check_file, check_git_status, print_mutation, set_logging, strip_optimizer
 from utils.plots import plot_evolution
 from utils.torch_utils import select_device
+import activelearning.config as config
 
 logger = logging.getLogger(__name__)
 
@@ -32,12 +33,12 @@ class Yolov5(BaseModel):
 
     def train(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument('--weights', type=str, default='activelearning/yolov5s.pt', help='initial weights path')
-        parser.add_argument('--cfg', type=str, default='models/yolo_gun.yaml', help='models/yolo_gun.yaml path')
-        parser.add_argument('--data', type=str, default='data/gun.yaml', help='data.yaml path')
+        parser.add_argument('--weights', type=str, default=config.weight, help='initial weights path')
+        parser.add_argument('--cfg', type=str, default=config.config_model, help='models/yolov5s.yaml path')
+        parser.add_argument('--data', type=str, default=config.config_data, help='data.yaml path')
         parser.add_argument('--hyp', type=str, default='data/hyp.scratch.yaml', help='hyperparameters path')
-        parser.add_argument('--epochs', type=int, default=1)
-        parser.add_argument('--batch-size', type=int, default=8, help='total batch size for all GPUs')
+        parser.add_argument('--epochs', type=int, default=config.epochs)
+        parser.add_argument('--batch-size', type=int, default=config.batch_size, help='total batch size for all GPUs')
         parser.add_argument('--img-size', nargs='+', type=int, default=[640, 640], help='[train, test] image sizes')
         parser.add_argument('--rect', action='store_true', help='rectangular training')
         parser.add_argument('--resume', nargs='?', const=True, default=False, help='resume most recent training')
@@ -48,20 +49,20 @@ class Yolov5(BaseModel):
         parser.add_argument('--bucket', type=str, default='', help='gsutil bucket')
         parser.add_argument('--cache-images', action='store_true', help='cache images for faster training')
         parser.add_argument('--image-weights', action='store_true', help='use weighted image selection for training')
-        parser.add_argument('--device', default='0', help='cuda device, i.e. 0 or 0,1,2,3 or cpu') # using GPU 0
+        parser.add_argument('--device', default=config.device, help='cuda device, i.e. 0 or 0,1,2,3 or cpu') # using GPU 0
         parser.add_argument('--multi-scale', action='store_true', help='vary img-size +/- 50%%')
         parser.add_argument('--single-cls', action='store_true', help='train multi-class data as single-class')
         # parser.add_argument('--adam', action='store_true', help='use torch.optim.Adam() optimizer')
-        parser.add_argument('--adam', type=int, default=1, help='use torch.optim.Adam() optimizer') # using Adam optimizer
+        parser.add_argument('--adam', type=int, default=config.adam, help='use torch.optim.Adam() optimizer') # using Adam optimizer
         parser.add_argument('--sync-bn', action='store_true', help='use SyncBatchNorm, only available in DDP mode')
         parser.add_argument('--local_rank', type=int, default=-1, help='DDP parameter, do not modify')
         parser.add_argument('--log-imgs', type=int, default=16, help='number of images for W&B logging, max 100')
         parser.add_argument('--log-artifacts', action='store_true', help='log artifacts, i.e. final trained model')
         parser.add_argument('--workers', type=int, default=8, help='maximum number of dataloader workers')
-        parser.add_argument('--project', default='runs/train', help='save to project/name')
-        parser.add_argument('--name', default='gun', help='save to project/name')
+        parser.add_argument('--project', default=config.project_train, help='save to project/name')
+        parser.add_argument('--name', default=config.name, help='save to project/name')
         # parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
-        parser.add_argument('--exist-ok', type=int, default=1, help='existing project/name ok, do not increment')
+        parser.add_argument('--exist-ok', type=int, default=config.exist_ok, help='existing project/name ok, do not increment')
         opt = parser.parse_args()
 
         # Set DDP variables
@@ -229,24 +230,25 @@ class Yolov5(BaseModel):
 
     def detect(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument('--weights', nargs='+', type=str, default='activelearning/yolov5s.pt', help='model.pt path(s)')
-        parser.add_argument('--source', type=str, default='data/test', help='source')  # file/folder, 0 for webcam
+        parser.add_argument('--weights', nargs='+', type=str, default=config.weight, help='model.pt path(s)')
+        parser.add_argument('--source', type=str, default=config.source, help='source')  # file/folder, 0 for webcam
         parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
-        parser.add_argument('--conf-thres', type=float, default=0.25, help='object confidence threshold')
-        parser.add_argument('--iou-thres', type=float, default=0.45, help='IOU threshold for NMS')
-        parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
+        parser.add_argument('--conf-thres', type=float, default=config.conf_thres, help='object confidence threshold')
+        parser.add_argument('--iou-thres', type=float, default=config.iou_thres, help='IOU threshold for NMS')
+        parser.add_argument('--device', default=config.device, help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
         parser.add_argument('--view-img', action='store_true', help='display results')
         # parser.add_argument('--save-txt', action='store_true', help='save results to *.txt')
         parser.add_argument('--save-txt', type=int, default=1, help='save results to *.txt')
-        parser.add_argument('--save-conf', action='store_true', help='save confidences in --save-txt labels')
+        # parser.add_argument('--save-conf', action='store_true', help='save confidences in --save-txt labels')
+        parser.add_argument('--save-conf', type=int, default=config.save_conf, help='save confidences in --save-txt labels')
         parser.add_argument('--classes', nargs='+', type=int, help='filter by class: --class 0, or --class 0 2 3')
         parser.add_argument('--agnostic-nms', action='store_true', help='class-agnostic NMS')
         parser.add_argument('--augment', action='store_true', help='augmented inference')
         parser.add_argument('--update', action='store_true', help='update all models')
-        parser.add_argument('--project', default='runs/detect', help='save results to project/name')
-        parser.add_argument('--name', default='gun', help='save results to project/name')
+        parser.add_argument('--project', default=config.project_detect, help='save results to project/name')
+        parser.add_argument('--name', default=config.name, help='save results to project/name')
         # parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
-        parser.add_argument('--exist-ok', type=int, default=1, help='existing project/name ok, do not increment')
+        parser.add_argument('--exist-ok', type=int, default=config.exist_ok, help='existing project/name ok, do not increment')
         opt = parser.parse_args()
         print(opt)
 

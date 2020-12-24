@@ -1,3 +1,8 @@
+from collections import OrderedDict
+import activelearning.config as config
+import glob
+import random
+
 class BaseSelectFunction(object):
     def __init__(self):
         pass
@@ -8,15 +13,15 @@ class BaseSelectFunction(object):
 
 class RandomSelect(BaseSelectFunction):
     @staticmethod
-    def select(probas_val):
-        pass
+    def select(num_select, probas):
+        return random.sample(probas.keys(), num_select)
 
 class EntropySelect(BaseSelectFunction):
     @staticmethod
-    def select(probas_val):
+    def select(num_select, files):
         pass
 
 class MarginSamplingSelect(BaseSelectFunction):
     @staticmethod
-    def select(probas_val):
+    def select(num_select, files):
         pass
