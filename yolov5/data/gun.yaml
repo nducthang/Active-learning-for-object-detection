@@ -1,0 +1,8 @@
+train: /media/thang/New Volume/Active-learning/yolov5/data/train.txt  # 128 images
+val: /media/thang/New Volume/Active-learning/yolov5/data/val.txt  # 128 images
+
+# number of classes
+nc: 1
+
+# class names
+names: ['gun']
