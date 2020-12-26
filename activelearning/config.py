@@ -9,7 +9,7 @@ mode_active = 'sum' # 'sum or mean
 # Config general
 project = "/media/thang/New Volume/Active-learning-for-object-detection/"
 weight = 'activelearning/yolov5s.pt'
-device = '0' # cpu or 0,1,...
+device = 'cpu' # cpu or 0,1,...
 name = 'gun'
 exist_ok = 1
 
@@ -17,7 +17,7 @@ exist_ok = 1
 config_model = 'models/yolo_gun.yaml'
 config_data = 'data/gun.yaml'
 batch_size = 1
-epochs = 2
+epochs = 10
 adam = 0
 project_train = 'runs/train'
 
