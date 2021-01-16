@@ -14,14 +14,13 @@ class BaseSelectFunction(object):
 class RandomSelect(BaseSelectFunction):
     @staticmethod
     def select(num_select, probas):
+        # probas có dạng {"tên ảnh": xác suất}
         return random.sample(probas.keys(), num_select)
 
-class EntropySelect(BaseSelectFunction):
+class UncertaintySampling(BaseSelectFunction):
     @staticmethod
-    def select(num_select, files):
-        pass
-
-class MarginSamplingSelect(BaseSelectFunction):
-    @staticmethod
-    def select(num_select, files):
+    def select(num_select, ):
+        """
+        docstring
+        """
         pass

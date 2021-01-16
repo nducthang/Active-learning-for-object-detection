@@ -32,17 +32,15 @@ class ActiveLearning(object):
         self.model = model
         self.select_function = select_function
         self.num_select = config.num_select
+        self.type = 'sum' # 'avg' , 'max', 'sum'
 
     def run(self):
-        self.queried = 0
-        # chưa thỏa mãn điều kiện dừng thì tiếp tục lặp lại active learning
-        while self.queried < config.max_queried:
-            # Xoá file dự đoán cũ
-            if os.path.exists(config.info_predict_path):
-                os.remove(config.info_predict_path)
+        # số truy vấn
+        queried = 0
+        # nếu chưa đủ số truy vấn thì tiếp tục truy vấn tiếp
+        while queried < config.max_queried:
             # Dự đoán các ảnh trong tập unlabeled
-            self.model.detect()
-            # Kết quả sau khi dự đoán được lưu ở config.info_predict_path
+            result = self.model.detect()
             # Tổng hợp kết quả
             probas = {str(file.split('/')[-1]): 0.0  for file in glob.glob(config.source + '/*')}
             num_object = probas.copy()

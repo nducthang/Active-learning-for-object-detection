@@ -9,7 +9,7 @@ mode_active = 'sum' # 'sum or mean
 # Config general
 project = "/media/thang/New Volume/Active-learning-for-object-detection/"
 weight = 'activelearning/yolov5s.pt'
-device = 'cpu' # cpu or 0,1,...
+device = '0' # cpu or 0,1,...
 name = 'gun'
 exist_ok = 1
 
