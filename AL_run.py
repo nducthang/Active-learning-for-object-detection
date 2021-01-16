@@ -18,19 +18,53 @@ Algorithm:
 
 """
 
+from torch.cuda.memory import reset_accumulated_memory_stats
 from AL_yolov5 import Yolov5
-import activelearning.select_function as select
-import activelearning.config as config
+import AL_config as config
 import glob
 import os
 from shutil import copyfile, move
 import io
 import copy
+def RandomSelect(num_select, result):
+    pass
+
+def UncertaintySamplingBinary(num_select, result, typ):
+    """
+    result = 
+        {"<link ảnh>": 
+            [
+                {"class": cls.item(), "box": [x,y,w,h], "conf": conf.item(),
+                ...
+            ],
+        ...
+        }
+    """
+    probas = {}
+    if typ == 'sum':
+        for item, lst_dic in result.items():
+            conf = 0
+            for dic in lst_dic:
+                conf += (1.0 - dic["conf"])
+            probas[item] = conf
+    elif typ == 'avg':
+        for item, lst_dic in result.items():
+            conf = 0
+            for dic in lst_dic:
+                conf += (1.0 - dic["conf"])
+            probas[item] = conf/len(lst_dic)
+    elif typ == 'max':
+        for item, lst_dic in result.items():
+            conf = 0
+            for dic in lst_dic:
+                conf = max(conf, 1.0 - dic["conf"])
+            probas[item] = conf
+    return sorted(probas, key=probas.get, reverse=True)[:num_select]
+
 
 class ActiveLearning(object):
-    def __init__(self, model, select_function):
+    def __init__(self, model):
         self.model = model
-        self.select_function = select_function
         self.num_select = config.num_select
         self.type = 'sum' # 'avg' , 'max', 'sum'
 
@@ -41,46 +75,32 @@ class ActiveLearning(object):
         while queried < config.max_queried:
             # Dự đoán các ảnh trong tập unlabeled
             result = self.model.detect()
-            # Tổng hợp kết quả
-            probas = {str(file.split('/')[-1]): 0.0  for file in glob.glob(config.source + '/*')}
-            num_object = probas.copy()
 
-            with open(config.info_predict_path, 'r') as f:
-                for line in f.readlines():
-                    *cxywh, prob, file_name = line.split(',')
-                    file_name = file_name[:-1]
-                    probas[file_name] += 1.0 - float(prob)
-                    num_object[file_name] += 1
-            
-            if config.mode_active == 'mean':
-                for key, value in probas.items():
-                    probas[key] = value/num_object[key]
-            
-            # Chọn ra k samples
-            if len(probas) >= self.num_select:
-                U_best = self.select_function.select(self.num_select, probas)
-            
-                # Gán nhãn cho U_best
-                """ GIẢ SỬ ĐOẠN NÀY LÀ NGƯỜI GÁN """
-                # Tạo ra các file label cho U_best vào thư mục labeled
+            # Chon ra k ảnh có score cao nhất
+            # Sử dụng lấy mẫu không chắc chắn
+            if len(result) >= self.num_select:
+                U_best = UncertaintySamplingBinary(self.num_select, result, 'sum')
+                print(U_best)
+                
+                # Gán nhãn cho các file trong samples (Người tương tác)
+
+                # Duyệt tất cả các file được chọn
                 for f in U_best:
                     # Chuyển file ảnh vào thự mục labeled
-                    move(os.path.join(config.unlabeled, f), os.path.join(config.labeled, f))
+                    move(f, f.replace("unlabeled", "labeled"))
                     # Tạo file nhãn vào thư mục labeled
-                    file_name = '.'.join(f.split('.')[:-1])
-                    # print(f)
-                    # source = open(os.path.join('data/gun/',f),"r",encoding='utf-8').readlines()
-                    # dect = open(os.path.join(config.labeled, file_name + '.txt', "w", encoding='utf-8').write(copy.copy(source)))
-                    copyfile(os.path.join('data/gun/', file_name+'.txt'), os.path.join(config.labeled, file_name + '.txt'))
+                    type_file = f.split('.')[-1]
+                    copyfile(f.replace("unlabeled","gun").replace(type_file, 'txt'), f.replace("unlabeled", "labeled").replace(type_file, 'txt'))
 
-                # Cập nhật file train.txt
-                with open('data/train.txt', 'w') as f:
-                    for fn in U_best:
-                        f.write(config.project + config.labeled + "/" + fn + "\n")
-                
+                # thêm danh sách file đã gán nhãn vào dữ liệu train
+                with open('data/train.txt', "a") as f:
+                    for file_name in U_best:
+                        f.write(file_name.replace("unlabeled","labeled") + '\n')
+
                 # Train model
                 self.model.train()
 
+                ####################### LOADING ########################
                 # Xoá file weight cũ
                 if os.path.exists(config.weight):
                     os.remove(config.weight)
@@ -95,7 +115,5 @@ class ActiveLearning(object):
 
 
 if __name__ == '__main__':
-    bot = ActiveLearning(model=Yolov5(), select_function=select.RandomSelect())
+    bot = ActiveLearning(model=Yolov5())
     bot.run()
-    # model = Yolov5()
-    # model.train()

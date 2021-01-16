@@ -4,7 +4,7 @@ from models.experimental import attempt_load
 from utils.datasets import  LoadImages
 from utils.general import check_img_size, non_max_suppression, scale_coords, xyxy2xywh, set_logging
 from utils.torch_utils import select_device, time_synchronized
-import activelearning.config as config
+import AL_config as config
 import time
 
 def AL_detect(opt):
