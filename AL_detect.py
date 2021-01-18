@@ -68,11 +68,10 @@ def AL_detect(opt):
                 
                 # Lưu thông tin về box vào 1 file
                 for *xyxy, conf, cls in reversed(det):
-                    with open(config.info_predict_path, 'a') as f:
-                        xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh)
-                        x,y,w,h = xywh
-                        data = {"class": cls.item(), "box": [x,y,w,h], "conf": conf.item()}
-                        result[path].append(data)
+                    xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh)
+                    x,y,w,h = xywh
+                    data = {"class": cls.item(), "box": [x,y,w,h], "conf": conf.item()}
+                    result[path].append(data)
             # Print time (inference + NMS)
             print(f'{s}Done. ({t2 - t1:.3f}s)')
     print(f'Done. ({time.time() - t0:.3f}s)')
