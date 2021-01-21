@@ -1,0 +1,72 @@
+2021-01-17 17:11:41,515 INFO    MainThread:5636 [internal.py:wandb_internal():62] W&B internal server running at pid: 5636
+2021-01-17 17:11:41,518 INFO    WriterThread:5636 [datastore.py:open_for_write():76] open: wandb/run-20210117_171140-1x8umzak/run-1x8umzak.wandb
+2021-01-17 17:11:41,519 DEBUG   SenderThread:5636 [sender.py:send():88] send: header
+2021-01-17 17:11:41,519 DEBUG   HandlerThread:5636 [handler.py:handle_request():54] handle_request: check_version
+2021-01-17 17:11:41,520 DEBUG   SenderThread:5636 [sender.py:send():88] send: request
+2021-01-17 17:11:41,520 DEBUG   SenderThread:5636 [sender.py:send_request():97] send_request: check_version
+2021-01-17 17:11:41,523 DEBUG   Thread-4  :5636 [connectionpool.py:_new_conn():943] Starting new HTTPS connection (1): pypi.org:443
+2021-01-17 17:11:41,656 DEBUG   Thread-4  :5636 [connectionpool.py:_make_request():442] https://pypi.org:443 "GET /pypi/wandb/json HTTP/1.1" 200 52801
+2021-01-17 17:11:41,708 DEBUG   SenderThread:5636 [sender.py:send():88] send: run
+2021-01-17 17:11:41,726 INFO    SenderThread:5636 [sender.py:_maybe_setup_resume():269] checking resume status for None/YOLOv5/1x8umzak
+2021-01-17 17:11:41,729 DEBUG   SenderThread:5636 [connectionpool.py:_new_conn():943] Starting new HTTPS connection (1): api.wandb.ai:443
+2021-01-17 17:11:42,253 DEBUG   SenderThread:5636 [connectionpool.py:_make_request():442] https://api.wandb.ai:443 "POST /graphql HTTP/1.1" 200 None
+2021-01-17 17:11:42,257 DEBUG   SenderThread:5636 [cmd.py:execute():719] Popen(['git', 'cat-file', '--batch-check'], cwd=/media/thang/New Volume/Active-learning-for-object-detection, universal_newlines=False, shell=None, istream=<valid stream>)
+2021-01-17 17:11:42,270 DEBUG   SenderThread:5636 [connectionpool.py:_new_conn():943] Starting new HTTPS connection (1): api.wandb.ai:443
+2021-01-17 17:11:42,671 DEBUG   SenderThread:5636 [connectionpool.py:_make_request():442] https://api.wandb.ai:443 "POST /graphql HTTP/1.1" 409 None
+2021-01-17 17:11:42,680 ERROR   SenderThread:5636 [internal_api.py:execute():131] 409 response executing GraphQL.
+2021-01-17 17:11:42,680 ERROR   SenderThread:5636 [internal_api.py:execute():132] {"errors":[{"message":"Error 1062: Duplicate entry '182406-1x8umzak' for key 'PRIMARY'","path":["upsertBucket"]}],"data":{"upsertBucket":null}}
+2021-01-17 17:11:43,874 DEBUG   SenderThread:5636 [connectionpool.py:_new_conn():943] Starting new HTTPS connection (1): api.wandb.ai:443
+2021-01-17 17:11:44,278 DEBUG   SenderThread:5636 [connectionpool.py:_make_request():442] https://api.wandb.ai:443 "POST /graphql HTTP/1.1" 409 None
+2021-01-17 17:11:44,281 ERROR   SenderThread:5636 [internal_api.py:execute():131] 409 response executing GraphQL.
+2021-01-17 17:11:44,281 ERROR   SenderThread:5636 [internal_api.py:execute():132] {"errors":[{"message":"Error 1062: Duplicate entry '182406-1x8umzak' for key 'PRIMARY'","path":["upsertBucket"]}],"data":{"upsertBucket":null}}
+2021-01-17 17:11:46,667 DEBUG   SenderThread:5636 [connectionpool.py:_new_conn():943] Starting new HTTPS connection (1): api.wandb.ai:443
+2021-01-17 17:11:47,119 DEBUG   SenderThread:5636 [connectionpool.py:_make_request():442] https://api.wandb.ai:443 "POST /graphql HTTP/1.1" 409 None
+2021-01-17 17:11:47,123 ERROR   SenderThread:5636 [internal_api.py:execute():131] 409 response executing GraphQL.
+2021-01-17 17:11:47,125 ERROR   SenderThread:5636 [internal_api.py:execute():132] {"errors":[{"message":"Error 1062: Duplicate entry '182406-1x8umzak' for key 'PRIMARY'","path":["upsertBucket"]}],"data":{"upsertBucket":null}}
+2021-01-17 17:11:47,125 ERROR   SenderThread:5636 [retry.py:__call__():111] Retry attempt failed:
+Traceback (most recent call last):
+  File "/home/thang/env/lib/python3.6/site-packages/wandb/old/retry.py", line 96, in __call__
+    result = self._call_fn(*args, **kwargs)
+  File "/home/thang/env/lib/python3.6/site-packages/wandb/internal/internal_api.py", line 134, in execute
+    six.reraise(*sys.exc_info())
+  File "/home/thang/env/lib/python3.6/site-packages/six.py", line 703, in reraise
+    raise value
+  File "/home/thang/env/lib/python3.6/site-packages/wandb/internal/internal_api.py", line 128, in execute
+    return self.client.execute(*args, **kwargs)
+  File "/home/thang/env/lib/python3.6/site-packages/wandb/vendor/gql-0.2.0/gql/client.py", line 52, in execute
+    result = self._get_result(document, *args, **kwargs)
+  File "/home/thang/env/lib/python3.6/site-packages/wandb/vendor/gql-0.2.0/gql/client.py", line 60, in _get_result
+    return self.transport.execute(document, *args, **kwargs)
+  File "/home/thang/env/lib/python3.6/site-packages/wandb/vendor/gql-0.2.0/gql/transport/requests.py", line 39, in execute
+    request.raise_for_status()
+  File "/home/thang/env/lib/python3.6/site-packages/requests/models.py", line 941, in raise_for_status
+    raise HTTPError(http_error_msg, response=self)
+requests.exceptions.HTTPError: 409 Client Error: Conflict for url: https://api.wandb.ai/graphql
+2021-01-17 17:11:51,984 DEBUG   SenderThread:5636 [connectionpool.py:_new_conn():943] Starting new HTTPS connection (1): api.wandb.ai:443
+2021-01-17 17:11:52,445 DEBUG   SenderThread:5636 [connectionpool.py:_make_request():442] https://api.wandb.ai:443 "POST /graphql HTTP/1.1" 409 None
+2021-01-17 17:11:52,449 ERROR   SenderThread:5636 [internal_api.py:execute():131] 409 response executing GraphQL.
+2021-01-17 17:11:52,450 ERROR   SenderThread:5636 [internal_api.py:execute():132] {"errors":[{"message":"Error 1062: Duplicate entry '182406-1x8umzak' for key 'PRIMARY'","path":["upsertBucket"]}],"data":{"upsertBucket":null}}
+2021-01-17 17:12:01,381 DEBUG   SenderThread:5636 [connectionpool.py:_new_conn():943] Starting new HTTPS connection (1): api.wandb.ai:443
+2021-01-17 17:12:01,826 DEBUG   SenderThread:5636 [connectionpool.py:_make_request():442] https://api.wandb.ai:443 "POST /graphql HTTP/1.1" 409 None
+2021-01-17 17:12:01,831 ERROR   SenderThread:5636 [internal_api.py:execute():131] 409 response executing GraphQL.
+2021-01-17 17:12:01,832 ERROR   SenderThread:5636 [internal_api.py:execute():132] {"errors":[{"message":"Error 1062: Duplicate entry '182406-1x8umzak' for key 'PRIMARY'","path":["upsertBucket"]}],"data":{"upsertBucket":null}}
+2021-01-17 17:12:11,708 DEBUG   HandlerThread:5636 [handler.py:handle_request():54] handle_request: shutdown
+2021-01-17 17:12:11,708 INFO    HandlerThread:5636 [handler.py:finish():267] shutting down handler
+2021-01-17 17:12:11,715 INFO    WriterThread:5636 [datastore.py:close():257] close: wandb/run-20210117_171140-1x8umzak/run-1x8umzak.wandb
+2021-01-17 17:12:19,800 DEBUG   SenderThread:5636 [connectionpool.py:_new_conn():943] Starting new HTTPS connection (1): api.wandb.ai:443
+2021-01-17 17:12:20,213 DEBUG   SenderThread:5636 [connectionpool.py:_make_request():442] https://api.wandb.ai:443 "POST /graphql HTTP/1.1" 409 None
+2021-01-17 17:12:20,218 ERROR   SenderThread:5636 [internal_api.py:execute():131] 409 response executing GraphQL.
+2021-01-17 17:12:20,219 ERROR   SenderThread:5636 [internal_api.py:execute():132] {"errors":[{"message":"Error 1062: Duplicate entry '182406-1x8umzak' for key 'PRIMARY'","path":["upsertBucket"]}],"data":{"upsertBucket":null}}
+2021-01-17 17:12:56,449 DEBUG   SenderThread:5636 [connectionpool.py:_new_conn():943] Starting new HTTPS connection (1): api.wandb.ai:443
+2021-01-17 17:12:56,863 DEBUG   SenderThread:5636 [connectionpool.py:_make_request():442] https://api.wandb.ai:443 "POST /graphql HTTP/1.1" 409 None
+2021-01-17 17:12:56,867 ERROR   SenderThread:5636 [internal_api.py:execute():131] 409 response executing GraphQL.
+2021-01-17 17:12:56,868 ERROR   SenderThread:5636 [internal_api.py:execute():132] {"errors":[{"message":"Error 1062: Duplicate entry '182406-1x8umzak' for key 'PRIMARY'","path":["upsertBucket"]}],"data":{"upsertBucket":null}}
+2021-01-17 17:14:07,205 DEBUG   SenderThread:5636 [connectionpool.py:_new_conn():943] Starting new HTTPS connection (1): api.wandb.ai:443
+2021-01-17 17:14:07,929 DEBUG   SenderThread:5636 [connectionpool.py:_make_request():442] https://api.wandb.ai:443 "POST /graphql HTTP/1.1" 409 None
+2021-01-17 17:14:07,933 ERROR   SenderThread:5636 [internal_api.py:execute():131] 409 response executing GraphQL.
+2021-01-17 17:14:07,935 ERROR   SenderThread:5636 [internal_api.py:execute():132] {"errors":[{"message":"Error 1062: Duplicate entry '182406-1x8umzak' for key 'PRIMARY'","path":["upsertBucket"]}],"data":{"upsertBucket":null}}
+2021-01-17 17:16:32,174 DEBUG   SenderThread:5636 [connectionpool.py:_new_conn():943] Starting new HTTPS connection (1): api.wandb.ai:443
+2021-01-17 17:16:32,638 DEBUG   SenderThread:5636 [connectionpool.py:_make_request():442] https://api.wandb.ai:443 "POST /graphql HTTP/1.1" 409 None
+2021-01-17 17:16:32,642 ERROR   SenderThread:5636 [internal_api.py:execute():131] 409 response executing GraphQL.
+2021-01-17 17:16:32,644 ERROR   SenderThread:5636 [internal_api.py:execute():132] {"errors":[{"message":"Error 1062: Duplicate entry '182406-1x8umzak' for key 'PRIMARY'","path":["upsertBucket"]}],"data":{"upsertBucket":null}}
+2021-01-17 17:20:28,826 INFO    MainThread:5636 [internal.py:handle_exit():137] Internal process exited

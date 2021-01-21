@@ -1,0 +1,21 @@
+2021-01-17 17:11:40,445 INFO    MainThread:5532 [wandb_init.py:_log_setup():292] Logging user logs to wandb/run-20210117_171140-1x8umzak/logs/debug.log
+2021-01-17 17:11:40,445 INFO    MainThread:5532 [wandb_init.py:_log_setup():293] Logging internal logs to wandb/run-20210117_171140-1x8umzak/logs/debug-internal.log
+2021-01-17 17:11:40,445 INFO    MainThread:5532 [wandb_setup.py:_flush():69] setting env: {}
+2021-01-17 17:11:40,445 INFO    MainThread:5532 [wandb_setup.py:_flush():69] setting user settings: {'email': 'nguyenducthang8a2@gmail.com'}
+2021-01-17 17:11:40,446 INFO    MainThread:5532 [wandb_setup.py:_flush():69] multiprocessing start_methods=fork,spawn,forkserver
+2021-01-17 17:19:51,111 WARNING MainThread:5532 [wandb_init.py:init():483] interrupted
+Traceback (most recent call last):
+  File "/home/thang/env/lib/python3.6/site-packages/wandb/sdk/wandb_init.py", line 463, in init
+    run = wi.init()
+  File "/home/thang/env/lib/python3.6/site-packages/wandb/sdk/wandb_init.py", line 378, in init
+    backend.cleanup()
+  File "/home/thang/env/lib/python3.6/site-packages/wandb/backend/backend.py", line 107, in cleanup
+    self.wandb_process.join()
+  File "/usr/lib/python3.6/multiprocessing/process.py", line 124, in join
+    res = self._popen.wait(timeout)
+  File "/usr/lib/python3.6/multiprocessing/popen_fork.py", line 50, in wait
+    return self.poll(os.WNOHANG if timeout == 0.0 else 0)
+  File "/usr/lib/python3.6/multiprocessing/popen_fork.py", line 28, in poll
+    pid, sts = os.waitpid(self.pid, flag)
+KeyboardInterrupt
+2021-01-17 17:19:51,193 INFO    MainThread:5532 [internal.py:handle_exit():137] Internal process exited

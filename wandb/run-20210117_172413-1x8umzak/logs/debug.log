@@ -1,0 +1,5 @@
+2021-01-17 17:24:13,050 INFO    MainThread:6694 [wandb_init.py:_log_setup():292] Logging user logs to wandb/run-20210117_172413-1x8umzak/logs/debug.log
+2021-01-17 17:24:13,051 INFO    MainThread:6694 [wandb_init.py:_log_setup():293] Logging internal logs to wandb/run-20210117_172413-1x8umzak/logs/debug-internal.log
+2021-01-17 17:24:13,051 INFO    MainThread:6694 [wandb_setup.py:_flush():69] setting env: {}
+2021-01-17 17:24:13,051 INFO    MainThread:6694 [wandb_setup.py:_flush():69] setting user settings: {}
+2021-01-17 17:24:13,052 INFO    MainThread:6694 [wandb_setup.py:_flush():69] multiprocessing start_methods=fork,spawn,forkserver

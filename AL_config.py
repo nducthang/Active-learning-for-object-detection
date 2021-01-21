@@ -1,5 +1,5 @@
 # Config for active learning
-max_queried = 2
+max_queried = 10
 unlabeled = 'data/unlabeled'
 labeled = 'data/labeled'
 num_select = 8
@@ -15,7 +15,7 @@ exist_ok = 1
 config_model = 'models/yolo_gun.yaml'
 config_data = 'data/gun.yaml'
 batch_size = 1
-epochs = 10
+epochs = 2
 adam = 0
 project_train = 'runs/train'
 
