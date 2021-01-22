@@ -71,6 +71,7 @@ class ActiveLearning(object):
     def run(self):
         # số truy vấn
         queried = 0
+        ep = 0
         # nếu chưa đủ số truy vấn thì tiếp tục truy vấn tiếp
         while queried < config.max_queried:
             # Dự đoán các ảnh trong tập unlabeled
@@ -98,7 +99,7 @@ class ActiveLearning(object):
                         f.write(file_name.replace("unlabeled","labeled") + '\n')
 
                 # Train model
-                self.model.train()
+                self.model.train(ep)
 
                 ####################### LOADING ########################
                 # Xoá file weight cũ
@@ -109,6 +110,7 @@ class ActiveLearning(object):
                 copyfile(os.path.join(config.project_train, config.name, 'weights', 'best.pt'), config.weight)
 
                 queried+=1
+                ep += config.epochs
             else:
                 print("Số lượng file chưa gán nhãn không đủ {} files".format(self.num_select))
                 break

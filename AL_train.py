@@ -43,7 +43,7 @@ except ImportError:
     logger.info("Install Weights & Biases for experiment logging via 'pip install wandb' (recommended)")
 
 
-def train(hyp, opt, device, tb_writer=None, wandb=None):
+def train(hyp, opt, device, tb_writer=None, wandb=None, ep = 0):
     logger.info(f'Hyperparameters {hyp}')
     save_dir, epochs, batch_size, total_batch_size, weights, rank = \
         Path(opt.save_dir), opt.epochs, opt.batch_size, opt.total_batch_size, opt.weights, opt.global_rank
@@ -358,7 +358,9 @@ def train(hyp, opt, device, tb_writer=None, wandb=None):
                     'x/lr0', 'x/lr1', 'x/lr2']  # params
             for x, tag in zip(list(mloss[:-1]) + list(results) + lr, tags):
                 if tb_writer:
-                    tb_writer.add_scalar(tag, x, epoch)  # tensorboard
+                    # tb_writer.add_scalar(tag, x, epoch)  # tensorboard
+                    tb_writer.add_scalar(tag, x, ep)
+            ep += 1
                 # if wandb:
                 #     wandb.log({tag: x})  # W&B
 
