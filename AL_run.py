@@ -74,6 +74,7 @@ class ActiveLearning(object):
         ep = 0
         # nếu chưa đủ số truy vấn thì tiếp tục truy vấn tiếp
         while queried < config.max_queried:
+            print("TRUY VẤN THỨ: ", queried)
             # Dự đoán các ảnh trong tập unlabeled
             result = self.model.detect()
 
