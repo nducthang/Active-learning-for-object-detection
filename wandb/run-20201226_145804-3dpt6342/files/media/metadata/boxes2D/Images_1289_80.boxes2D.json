@@ -1,1 +1,0 @@
-{"box_data": [{"position": {"minX": 36.25, "minY": 35.375, "maxX": 635.0, "maxY": 304.5}, "class_id": 0, "box_caption": "gun 0.934", "scores": {"class_score": 0.93408203125}, "domain": "pixel"}], "class_labels": {"0": "gun"}}

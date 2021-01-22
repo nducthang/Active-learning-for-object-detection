@@ -5,7 +5,7 @@ import os
 import random
 import time
 from pathlib import Path
-from train import train
+from AL_train import train
 from warnings import warn
 import numpy as np
 import torch.distributed as dist
@@ -44,14 +44,16 @@ class Yolov5():
         parser.add_argument('--nosave', action='store_true', help='only save final checkpoint')
         parser.add_argument('--notest', action='store_true', help='only test final epoch')
         parser.add_argument('--noautoanchor', action='store_true', help='disable autoanchor check')
+        # parser.add_argument('--noautoanchor', type=bool, default=True, help='disable autoanchor check')
         parser.add_argument('--evolve', action='store_true', help='evolve hyperparameters')
+        # parser.add_argument('--evolve', type = bool, default = False, help='evolve hyperparameters')
         parser.add_argument('--bucket', type=str, default='', help='gsutil bucket')
         parser.add_argument('--cache-images', action='store_true', help='cache images for faster training')
         parser.add_argument('--image-weights', action='store_true', help='use weighted image selection for training')
         parser.add_argument('--device', default=config.device, help='cuda device, i.e. 0 or 0,1,2,3 or cpu') # using GPU 0
         parser.add_argument('--multi-scale', action='store_true', help='vary img-size +/- 50%%')
         parser.add_argument('--single-cls', action='store_true', help='train multi-class data as single-class')
-        parser.add_argument('--adam', action='store_true', help='use torch.optim.Adam() optimizer')
+        # parser.add_argument('--adam', action='store_true', help='use torch.optim.Adam() optimizer')
         parser.add_argument('--adam', type=int, default=config.adam, help='use torch.optim.Adam() optimizer') # using Adam optimizer
         parser.add_argument('--sync-bn', action='store_true', help='use SyncBatchNorm, only available in DDP mode')
         parser.add_argument('--local_rank', type=int, default=-1, help='DDP parameter, do not modify')
@@ -60,7 +62,7 @@ class Yolov5():
         parser.add_argument('--workers', type=int, default=8, help='maximum number of dataloader workers')
         parser.add_argument('--project', default=config.project_train, help='save to project/name')
         parser.add_argument('--name', default=config.name, help='save to project/name')
-        parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
+        # parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
         parser.add_argument('--exist-ok', type=int, default=config.exist_ok, help='existing project/name ok, do not increment')
         opt = parser.parse_args()
 

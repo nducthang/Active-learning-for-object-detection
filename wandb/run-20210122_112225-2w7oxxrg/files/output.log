@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "AL_run.py", line 119, in <module>
+    bot.run()
+  File "AL_run.py", line 101, in run
+    self.model.train()
+  File "/media/thang/New Volume/Active-learning-for-object-detection/AL_yolov5.py", line 117, in train
+    train(hyp, opt, device, tb_writer, wandb)
+  File "/media/thang/New Volume/Active-learning-for-object-detection/AL_train.py", line 158, in train
+    assert start_epoch > 0, '%s training to %g epochs is finished, nothing to resume.' % (weights, epochs)
+AssertionError: ./runs/train/gun_backup/weights/last.pt training to 10 epochs is finished, nothing to resume.

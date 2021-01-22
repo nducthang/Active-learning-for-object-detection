@@ -1,0 +1,23 @@
+Scanning images:   0%|          | 0/288 [00:00<?, ?it/s]Scanning '/media/thang/New Volume/Active-learning-for-object-detection/data/labeled' for images and labels... 194 found, 0 missing, 0 empty, 0 corrupted:  67%|██████▋   | 194/288 [00:00<00:00, 1930.39it/s]Scanning '/media/thang/New Volume/Active-learning-for-object-detection/data/labeled' for images and labels... 288 found, 0 missing, 0 empty, 0 corrupted: 100%|██████████| 288/288 [00:00<00:00, 1818.39it/s]
+New cache created: /media/thang/New Volume/Active-learning-for-object-detection/data/labeled.cache
+Scanning '/media/thang/New Volume/Active-learning-for-object-detection/data/labeled.cache' for images and labels... 288 found, 0 missing, 0 empty, 0 corrupted: 100%|██████████| 288/288 [00:00<?, ?it/s]
+Scanning '/media/thang/New Volume/Active-learning-for-object-detection/data/gun.cache' for images and labels... 100 found, 0 missing, 0 empty, 0 corrupted: 100%|██████████| 100/100 [00:00<?, ?it/s][ATraceback (most recent call last):
+  File "AL_run.py", line 119, in <module>
+    bot.run()
+  File "AL_run.py", line 101, in run
+    self.model.train()
+  File "/media/thang/New Volume/Active-learning-for-object-detection/AL_yolov5.py", line 118, in train
+    train(hyp, opt, device, tb_writer, wandb)
+  File "/media/thang/New Volume/Active-learning-for-object-detection/AL_train.py", line 208, in train
+    plot_labels(labels, save_dir, loggers)
+  File "/media/thang/New Volume/Active-learning-for-object-detection/utils/plots.py", line 261, in plot_labels
+    colors = color_list()
+  File "/media/thang/New Volume/Active-learning-for-object-detection/utils/plots.py", line 34, in color_list
+    return [hex2rgb(h) for h in plt.rcParams['axes.prop_cycle'].by_key()['color']]
+  File "/media/thang/New Volume/Active-learning-for-object-detection/utils/plots.py", line 34, in <listcomp>
+    return [hex2rgb(h) for h in plt.rcParams['axes.prop_cycle'].by_key()['color']]
+  File "/media/thang/New Volume/Active-learning-for-object-detection/utils/plots.py", line 32, in hex2rgb
+    return tuple(int(h[1 + i:1 + i + 2], 16) for i in (0, 2, 4))
+  File "/media/thang/New Volume/Active-learning-for-object-detection/utils/plots.py", line 32, in <genexpr>
+    return tuple(int(h[1 + i:1 + i + 2], 16) for i in (0, 2, 4))
+TypeError: int() can't convert non-string with explicit base
