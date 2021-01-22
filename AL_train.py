@@ -43,6 +43,7 @@ except ImportError:
     logger.info("Install Weights & Biases for experiment logging via 'pip install wandb' (recommended)")
 
 
+
 def train(hyp, opt, device, tb_writer=None, wandb=None, ep = 0):
     logger.info(f'Hyperparameters {hyp}')
     save_dir, epochs, batch_size, total_batch_size, weights, rank = \
@@ -356,10 +357,23 @@ def train(hyp, opt, device, tb_writer=None, wandb=None, ep = 0):
                     'metrics/precision', 'metrics/recall', 'metrics/mAP_0.5', 'metrics/mAP_0.5:0.95',
                     'val/box_loss', 'val/obj_loss', 'val/cls_loss',  # val loss
                     'x/lr0', 'x/lr1', 'x/lr2']  # params
+            
+            # Lưu kết quả lại để vẽ đồ thị so sánh
+            f = open("AL_result.txt", "a")
+
             for x, tag in zip(list(mloss[:-1]) + list(results) + lr, tags):
                 if tb_writer:
                     # tb_writer.add_scalar(tag, x, epoch)  # tensorboard
                     tb_writer.add_scalar(tag, x, ep)
+                    if type(x) == float:
+                        f.write(str(x) + ",")
+                    else:
+                        f.write(str(x.item()) + ",")
+
+            f.write(str(ep)+"\n")
+            f.close()   
+
+
             ep += 1
                 # if wandb:
                 #     wandb.log({tag: x})  # W&B

@@ -1,5 +1,5 @@
 # Config for active learning
-max_queried = 10
+max_queried = 200
 unlabeled = 'data/unlabeled'
 labeled = 'data/labeled'
 num_select = 8

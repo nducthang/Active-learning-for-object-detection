@@ -16,7 +16,7 @@ rand_idx = np.random.randint(0, len(files), nb_val)
 # Tao file train.txt
 with open("./data/train.txt", "w") as f:
     for idx in np.arange(len(files)):
-        if (os.path.exists(files[idx][:-3]+"txt")):
+        if (idx not in rand_idx) and (os.path.exists(files[idx][:-3]+"txt")):
             f.write(files[idx]+"\n")
 
 # Tao file val.txt
