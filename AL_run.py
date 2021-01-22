@@ -107,6 +107,8 @@ class ActiveLearning(object):
 
                 # Cập nhật weight mới
                 copyfile(os.path.join(config.project_train, config.name, 'weights', 'best.pt'), config.weight)
+
+                queried+=1
             else:
                 print("Số lượng file chưa gán nhãn không đủ {} files".format(self.num_select))
                 break
