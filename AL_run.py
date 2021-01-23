@@ -72,8 +72,8 @@ class ActiveLearning(object):
 
     def run(self):
         # số truy vấn
-        queried = 0
-        ep = 0
+        queried = 33
+        ep = 66
         # nếu chưa đủ số truy vấn thì tiếp tục truy vấn tiếp
         while queried < config.max_queried:
             print("TRUY VẤN THỨ: ", queried)
