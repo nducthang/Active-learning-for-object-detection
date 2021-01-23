@@ -26,8 +26,10 @@ import os
 from shutil import copyfile, move
 import io
 import copy
+import random
+
 def RandomSelect(num_select, result):
-    pass
+    return random.sample(result.keys(), num_select)
 
 def UncertaintySamplingBinary(num_select, result, typ):
     """
@@ -81,7 +83,8 @@ class ActiveLearning(object):
             # Chon ra k ảnh có score cao nhất
             # Sử dụng lấy mẫu không chắc chắn
             if len(result) >= self.num_select:
-                U_best = UncertaintySamplingBinary(self.num_select, result, 'sum')
+                U_best = RandomSelect(self.num_select, result)
+                # U_best = UncertaintySamplingBinary(self.num_select, result, 'sum')
                 print(U_best)
                 
                 # Gán nhãn cho các file trong samples (Người tương tác)
